@@ -1,0 +1,16 @@
+
+__pycache__/
+*.py[cod]
+
+*.key
+*.enc
+# Plaintext credential dumps (cache_handler, folder_connect)
+**/login_credentials.json
+
+cache_handler/
+folder_connect/
+db_connect/schema_map.json
+local/
+trend_files.json
+main_program.py
+.env

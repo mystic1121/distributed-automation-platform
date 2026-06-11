@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RCP KPI Automation Report</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='images/Jio_logo.png') }}" sizes="32x32" type="image/png">
+
+  <style>
+    /* ===== GLOBAL LAYOUT FIX ===== */
+    html,
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+
+    }
+
+    .main5-container {
+      margin-top: 70px;
+      display: flex;
+      min-height: calc(100vh - 70px);
+      overflow: visible;
+    }
+
+    .navigation_bar {
+      top: 50px;
+      width: 70px;
+      flex-shrink: 0;
+    }
+
+    .kpi-page-container {
+      margin-left: 70px;
+      flex: 1;
+      padding: 24px 32px 120px;
+      box-sizing: border-box;
+    }
+
+    /* ===== KPI CARD ===== */
+    .kpi-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      padding: 20px 24px 28px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .kpi-card h3 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      color: #1e3a8a;
+    }
+
+    .kpi-card p.subtitle {
+      margin: 0 0 20px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .kpi-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .kpi-field {
+      flex: 1 1 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .kpi-field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+
+    }
+
+    .kpi-field small {
+      font-size: 11px;
+      color: #777;
+    }
+
+    .kpi-input,
+    .kpi-select,
+    .kpi-file {
+      border: 1px solid rgb(27, 27, 27);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      background-color: #fff;
+    }
+
+    .kpi-advanced {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+    }
+
+    .kpi-time-grid {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      font-size: 12px;
+    }
+
+    .kpi-time-grid label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .kpi-advanced-header {
+      margin-bottom: 8px;
+    }
+
+    .kpi-location-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #f9fafb;
+    }
+
+    .kpi-location-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.15s;
+    }
+
+    .kpi-location-item:hover {
+      background-color: #e5e7eb;
+    }
+
+    .kpi-location-loading {
+      padding: 12px;
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .kpi-location-actions {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .kpi-btn-link {
+      background: none;
+      border: none;
+      color: #1565c0;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    .kpi-btn-link:hover {
+      color: #0d47a1;
+    }
+
+    .kpi-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .kpi-btn-primary {
+      background: linear-gradient(135deg, #1e88e5, #1565c0);
+      color: #ffffff;
+      border: none;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .kpi-btn-secondary {
+      background: #fff;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 9px 14px;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* ===== OUTPUT SECTION ===== */
+    .kpi-outputs-card {
+      margin-top: 32px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 18px 22px;
+    }
+
+    .kpi-outputs-card h4 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: #1e3a8a;
+    }
+
+    .kpi-outputs-hint {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .kpi-outputs-placeholder {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .kpi-output-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+
+    .kpi-output-link {
+      color: #1565c0;
+      text-decoration: none;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kpi-output-link:hover {
+      text-decoration: underline;
+    }
+
+    .kpi-output-link i {
+      color: #0d47a1;
+    }
+
+    /* ===== TABLE / LIST STYLE (similar to sleeping_cell) ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-bottom: 10px;
+      margin-top: 5px;
+      background-color: white;
+      overflow-x: auto;
+      margin-left: 2px;
+    }
+
+    th,
+    td {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: top;
+      word-wrap: break-word;
+    }
+
+    th {
+      background-color: #4b4e9c;
+      color: white;
+    }
+
+    .table-scroll {
+      width: 100%;
+      margin-top: -10px;
+      overflow-x: auto;
+      /* Allow horizontal scroll for table if narrow, but not vertical */
+    }
+
+    .table-scroll::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+
+    /* KPI table column widths */
+    #kpi-table {
+      table-layout: fixed;
+    }
+
+    /* ID */
+    #kpi-table th:nth-child(1),
+    #kpi-table td:nth-child(1) {
+      width: 3%;
+      white-space: nowrap;
+    }
+
+    /* File Name (job_id) */
+    #kpi-table th:nth-child(2),
+    #kpi-table td:nth-child(2) {
+      width: 20%;
+      word-break: break-all;
+    }
+
+
+    #kpi-table th:nth-child(3),
+    #kpi-table td:nth-child(3) {
+      width: 14%;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+
+    #kpi-table th:nth-child(4),
+    #kpi-table td:nth-child(4) {
+      width: 14%;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+
+    #kpi-table th:nth-child(5),
+    #kpi-table td:nth-child(5) {
+      width: 14%;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+
+    #kpi-table th:nth-child(6),
+    #kpi-table td:nth-child(6) {
+      width: 14%;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+
+    #kpi-table th:nth-child(7),
+    #kpi-table td:nth-child(7) {
+      width: 14%;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+
+    #kpi-table th:nth-child(8),
+    #kpi-table td:nth-child(8) {
+      width: 8%;
+    }
+
+
+    #kpi-table th:nth-child(9),
+    #kpi-table td:nth-child(9) {
+      width: 6%;
+    }
+
+    #kpi-table th:nth-child(10),
+    #kpi-table td:nth-child(10) {
+      width: 7%;
+    }
+
+    #kpi-table th:nth-child(11),
+    #kpi-table td:nth-child(11) {
+      width: 4%;
+    }
+
+
+
+    .kpi-status-badge i {
+      margin-right: 4px;
+    }
+
+    .kpi-status-pending {
+      color: #f59e0b;
+    }
+
+    .kpi-status-running {
+      color: #2563eb;
+    }
+
+    .kpi-status-success {
+      color: #16a34a;
+    }
+
+    .kpi-status-failed {
+      color: #dc2626;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0 16px 0;
+      flex-wrap: nowrap;
+      /* Force one line */
+      width: 100%;
+    }
+
+    .automation-btn {
+      background: linear-gradient(135deg, #1e88e5, #1565c0);
+      color: #fff;
+      border: none;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(30, 136, 229, 0.25);
+      width: 200px;
+      height: 38px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+
+
+
+    .modalpage-content {
+      background-color: #ffffff;
+      margin: 5% auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      padding: 10px 24px 24px;
+      margin-top: 10px;
+    }
+
+    #trend_file_select1 option:checked {
+      background-color: #007bff;
+      color: white;
+    }
+
+    /* Optional hover */
+    .file-item:hover {
+      background: #f2f2f2;
+    }
+
+    #trend_file_container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 12px;
+      /* row gap 12px, column gap 20px */
+      padding: 10px;
+      margin: 0;
+
+    }
+
+    .file-box {
+      border: 0.2px solid #ccc;
+      height: 340px;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+
+    .file-box::-webkit-scrollbar {
+      height: 3px;
+      width: 3px;
+    }
+
+    .file-box::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .file-box::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Each file item should have fixed width to fit 5 per line */
+    .file-item {
+      display: flex;
+      align-items: left;
+      gap: 5px;
+      cursor: pointer;
+      width: calc((100% / 6) - 10px);
+      /* 5 items per row minus gaps */
+      box-sizing: border-box;
+      white-space: nowrap;
+      user-select: none;
+      padding: 4px 8px;
+      height: 36px;
+      text-overflow: ellipsis;
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: left;
+      gap: 5px;
+      /* space between checkbox and label */
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      margin-top: 8px;
+      justify-self: left;
+      /* center checkbox in its fixed 24px column */
+    }
+
+    .checkbox-wrapper label {
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      margin-top: 5px;
+    }
+
+    /* ===== MAPPING EDITOR STYLES ===== */
+    .mapping-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mapping-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      background: #f8fafc;
+    }
+
+    .mapping-section h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #1e3a8a;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mapping-row {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .mapping-csv-name {
+      font-weight: 600;
+      font-size: 12px;
+      width: 280px;
+      color: #334155;
+      word-break: break-all;
+      padding-right: 15px;
+    }
+
+    .mapping-templates-dropzone {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 44px;
+      padding: 6px;
+      background: #f1f5f9;
+      border: 2px dashed #cbd5e1;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .mapping-templates-dropzone.drag-over {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.1);
+    }
+
+    .template-pill {
+      background: #3b82f6;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      transition: transform 0.1s;
+    }
+
+    .template-pill:active {
+      cursor: grabbing;
+      transform: scale(0.95);
+    }
+
+    .template-pill.source {
+      background: #60a5fa;
+    }
+
+    .template-pill .remove-btn {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      line-height: 1;
+      margin-left: 4px;
+      opacity: 0.7;
+    }
+
+    .template-pill .remove-btn:hover {
+      opacity: 1;
+      color: #fee2e2;
+    }
+
+    .available-templates-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      min-height: 60px;
+    }
+
+    .add-mapping-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mapping-csv-input {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    /* ===== PAGINATION STYLES ===== */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      margin-top: -25px;
+      padding: 4px 0;
+      height: 32px;
+      clear: both;
+      width: 420px;
+      margin-left: 420px;
+    }
+
+    .pagination-btn {
+      background: #fff;
+      color: #1e88e5;
+      border: 1px solid #1e88e5;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: #e3f2fd;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(30, 136, 229, 0.15);
+    }
+
+    .pagination-btn.active {
+      background: linear-gradient(135deg, #1e88e5, #1565c0);
+      color: #fff;
+      border-color: #1565c0;
+      box-shadow: 0 4px 8px rgba(21, 101, 192, 0.3);
+    }
+
+    .pagination-btn:disabled {
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      background: #f8fafc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .pagination-info {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 10px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== TOP MENU ===== -->
+  <div class="menu-container">
+    <a href="{{ url_for('automation_module') }}" class="back-button">
+      <img src="{{ url_for('static', filename='images/curved-arrow-left-white-icon.webp') }}"
+        style="margin-top: 0px; width: 25px; height: 25px;" />
+    </a>
+
+    <h2>RCP KPI Automation Report</h2>
+
+    <div class="user-status">
+      {% if user_logged_in %}
+      <span class="welcome-text">{{ name }}</span>
+      <br><br>
+      <button class="logout-btn" style="background-color: #32CD32; border-radius: 50%; height: 33px; width: 33px;"
+        title="Logout" onclick="location.href='/logout'">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+      {% else %}
+      <button onclick="location.href='/'">Login</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main5-container" style="width: 100%; margin-right: 40px;">
+
+    <div class="navigation_bar">
+      <button title="Project Documents" data-page="/usefull_links" onclick="location.href='/usefull_links'"><i
+          class="fas fa-file-alt"></i></button>
+      <button title="RF Planning Data" data-page="/planning-DB" onclick="location.href='/planning-DB'"><i
+          class="fas fa-project-diagram"></i></button>
+      <button title="Integration Module" data-page="/create-ODD" onclick="location.href='/create-ODD'"><i
+          class="fas fa-cogs"></i></button>
+      <button title="Master Database" data-page="/update-MDB" onclick="location.href='/update-MDB'"><i
+          class="fas fa-database"></i></button>
+      <button title="Project Roll-Out" data-page="/project_tracker" onclick="location.href='/project_tracker'"><i
+          class="fas fa-chart-line"></i></button>
+      <button title="Inventory Management" data-page="/update-inventory" onclick="location.href='/update-inventory'"><i
+          class="fas fa-warehouse"></i></button>
+      <button title="Incident Tracking System" data-page="/incident-tracking"
+        onclick="location.href='/incident-tracking'"><i class="fas fa-clipboard-list"></i></button>
+      <button title="Deployment Architecture" data-page="/calculate-BOQ" onclick="location.href='/calculate-BOQ'"><i
+          class="fas fa-sitemap"></i></button>
+      <button title="Jio Indigenous Product" data-page="/product-info" onclick="location.href='/product-info'"><i
+          class="fas fa-info-circle"></i></button>
+      <button title="Automation Module" data-page="/automation-module" onclick="location.href='/automation-module'"><i
+          class="fas fa-robot"></i></button>
+    </div>
+
+
+
+    <!-- KPI CONTENT (styled similar to sleeping_cell: button + table + hidden input block) -->
+    <div class="kpi-page-container" style="margin-left: 40px; margin-top: -50px;">
+
+      <!-- Top controls: trigger input block + search -->
+      <div class="top-controls">
+        <button class="automation-btn" type="button" onclick="openUploadModal()" title="Create KPI Automation Job">
+          <i class="fas fa-upload"></i> KPI Automation Job
+        </button>
+
+        <button class="automation-btn" type="button" onclick="openTemplateModal()" title="Modify/Create Template">
+          <i class="fas fa-pen-to-square"></i> Modify/Create Template
+        </button>
+
+        <button class="automation-btn" type="button" onclick="openTrendModal()" title="Trend Files">
+          <i class="fas fa-chart-bar"></i> Trend Files
+        </button>
+
+        <button class="automation-btn" type="button" onclick="openModal()" title="Generate Report">
+          <i class="fas fa-file-alt"></i> Generate Report
+        </button>
+
+        <button class="automation-btn" type="button" onclick="openMappingModal()" title="Edit Mapping JSON">
+          <i class="fas fa-cogs"></i> Edit Mapping
+        </button>
+
+
+
+
+      </div>
+      <!-- 
+      <div id="kpi-input-block" class="kpi-card kpi-input-block">
+
+        <h3>New RCP Pre/Post KPI Job</h3>
+        <p class="subtitle">Configure the report parameters and upload the KPI CSV file.</p>
+
+        <form class="kpi-form" method="post" action="#" enctype="multipart/form-data">
+          <div class="kpi-row">
+            <div class="kpi-field">
+              <label for="report_date">Report Date</label>
+              <input type="date" id="report_date" name="report_date" class="kpi-input" required>
+              
+            </div>
+            <div class="kpi-field">
+              <label for="report_type">Report Type</label>
+              <select id="report_type" name="report_type" class="kpi-select" required>
+                <option value="daily" selected>Daily</option>
+                <option value="quaterly">Quarterly</option>
+                <option value="hourly">Hourly</option>
+              </select>
+              
+            </div>
+          </div>
+
+          <div class="kpi-row">
+            <div class="kpi-field">
+              <label for="kpi_file">Upload KPI CSV File</label>
+              <input type="file" id="kpi_file" name="kpi_file" class="kpi-file" accept=".csv" required>
+              
+            </div>
+            <div class="kpi-field">
+              <label for="project_code">Project Code</label>
+              <input type="text" id="project_code" name="project_code" class="kpi-input" value="prepost" readonly>
+              
+            </div>
+          </div>
+
+          
+
+          <!-- Time Filter Section -->
+
+      <!-- Modal-style input block (same pattern as sleeping_cell: uploaddocument + modalpage-content) -->
+      <div id="uploaddocument" class="modalpage" style="height: 100%; margin-top: -20px;">
+        <div class="modalpage-content" style="min-height: 30%; width: 480px; max-height: 80vh; overflow-y: auto;">
+
+          <form id="uploadForm1" method="POST" action="/upload-kpi-automation" enctype="multipart/form-data">
+            <div style="display: flex; gap:8px; width: 100%; position: relative;">
+              <h3 style="width: 90%; text-align: center; margin: 5px;">KPI Automation Job</h3>
+              <button type="button"
+                style="position: absolute; top: 0; right: 0; background-color: #dc3545; justify-content: right; color: white; width: 6%; padding: 3px 8px;"
+                onclick="closepageModal()">X</button>
+            </div>
+
+
+
+            <!-- KPI-specific fields -->
+
+            <div style="display: flex; width:100%; margin-top: 10px;">
+              <label for="kpi_file" style="width: 200px;">Upload KPI CSV File:</label>
+              <input type="file" id="kpi_file" name="kpi_file" class="kpi-file" style="width: 100%;" accept=".csv"
+                required>
+            </div>
+
+            <div style="display: flex; width:100%; margin-top: 10px;">
+              <label for="report_type" style="width: 200px;">Report Type:</label>
+              <select id="report_type" name="report_type" class="kpi-select" style="width: 100%;" required>
+                <option value="daily" selected>Daily</option>
+                <option value="hourly">Hourly</option>
+                <option value="quarterly">Quarterly</option>
+              </select>
+            </div>
+
+            <div style="display: flex; width:100%; margin-top: 10px;">
+              <label for="jcp_format" style="width: 200px;">JCP Format:</label>
+              <select id="jcp_format" name="jcp_format" class="kpi-select" style="width: 100%;" required>
+                <option value="false" selected>False</option>
+                <option value="true">True</option>
+              </select>
+            </div>
+
+            <div style="display: flex; width:100%; margin-top: 10px;">
+              <label for="post_process" style="width: 200px;">Post-processing:</label>
+              <select id="post_process" name="post_process" class="kpi-select" style="width: 100%;">
+                <option value="false" selected>No (Normal Job)</option>
+                <option value="true">Yes (Post-processed)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; width:100%; margin-top: 10px;">
+              <label for="template_id" style="width: 200px;">Template:</label>
+
+              <select id="template_id" name="template_id" class="kpi-select" style="width: 100%;" required>
+                <option value="">Select template</option>
+              </select>
+            </div>
+
+
+
+
+            <!-- Time Filter Section -->
+
+
+            <div class="kpi-actions" style="margin-top: 16px;">
+              <button type="button" class="kpi-btn-secondary" onclick="closepageModal()">Cancel</button>
+              <button type="button" id="runBtn" class="kpi-btn-primary" style="margin-left: 8px;">
+                <i class="fas fa-play"></i> Run KPI Automation
+              </button>
+            </div>
+
+            <!-- Simple loading text (you can swap to video like sleeping_cell if needed) -->
+            <div id="loadingAnimation"
+              style="display:none; margin-top: 10px; text-align:center; font-size: 12px; color:#374151;">
+              Running KPI job... Please do not close this window.
+            </div>
+
+          </form>
+        </div>
+      </div> <!-- /uploaddocument -->
+
+      <!-- TEMPLATE MODAL -->
+      <div id="templateModal" class="modalpage" style="height: 100%; margin-top: -20px;">
+        <div class="modalpage-content" style="min-height: 30%; width: 480px; max-height: 80vh; overflow-y: auto;">
+          <form id="templateForm" method="POST" action="/modify-template" enctype="multipart/form-data">
+            <div style="display: flex; gap:8px; width: 100%; position: relative;">
+              <h3 style="width: 90%; text-align: center; margin: 5px;">Manage Templates</h3>
+              <button type="button"
+                style="position: absolute; top: 0; right: 0; background-color: #dc3545; justify-content: right; color: white; width: 6%; padding: 3px 8px;"
+                onclick="closeTemplateModal()">X</button>
+            </div>
+
+            <div style="display: block; margin-bottom: 20px;">
+              <div style="display: flex; width:100%; margin-top: 10px;">
+                <label for="edit_template_id" style="width: 200px;">Select Base Template:</label>
+                <select id="edit_template_id" name="edit_template_id" class="kpi-select" style="width: 100%;" required
+                  onchange="updateDownloadLink()">
+                  <option value="">Select template</option>
+                </select>
+              </div>
+              <div style="width: 100%; text-align: right; margin-top: 6px; padding-right: 4px;">
+                <a id="downloadTemplateLink" href="#" onclick="checkDownloadSelection(event)"
+                  style="font-size: 13px; color: #1e88e5; text-decoration: underline; display: inline-block; font-weight: 500;">
+                  <i class="fas fa-download"></i> Download Template
+                </a>
+              </div>
+            </div>
+
+            <!-- Radio Selection -->
+
+
+
+
+
+            <div style="display: flex; justify-content: space-around; margin-top: 16px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="template_action" value="edit" onclick="toggleTemplateOptions()" checked>
+                <span style="font-weight: 500;">Edit Template</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="template_action" value="create" onclick="toggleTemplateOptions()">
+                <span style="font-weight: 500;">Create New Template</span>
+              </label>
+            </div>
+
+
+
+
+            <!-- Create New Section -->
+            <div id="createTemplateSection" style="display: none;">
+              <div style="display: flex; width:100%; margin-top: 10px;">
+                <label for="new_template_name" style="width: 200px;">Template Mapping Name:</label>
+                <input type="text" id="new_template_name" name="new_template_name" class="kpi-input"
+                  style="width: 100%;" placeholder="e.g. NOKIA_NEW">
+              </div>
+            </div>
+
+            <!-- Common File Upload -->
+            <div style="display: flex; width:100%; margin-top: 16px;">
+              <label for="template_file" style="width: 200px;">Upload Template (.xlsx):</label>
+              <input type="file" id="template_file" name="template_file" class="kpi-file" style="width: 100%;"
+                accept=".xlsx" required>
+            </div>
+
+            <div class="kpi-actions" style="margin-top: 16px;">
+              <button type="button" class="kpi-btn-secondary" onclick="closeTemplateModal()">Cancel</button>
+              <button type="submit" class="kpi-btn-primary" style="margin-left: 8px;">
+                <i class="fas fa-save"></i> Save Template
+              </button>
+            </div>
+          </form>
+        </div>
+      </div> <!-- /templateModal -->
+
+      <!-- TREND FILES MODAL -->
+      <div id="trendModal" class="modalpage" style="height: 100%; margin-top: -20px;">
+        <div class="modalpage-content" style="min-height: 30%; width: 480px; max-height: 80vh; overflow-y: auto;">
+          <form id="trendForm">
+            <div style="display: flex; gap:8px; width: 100%; position: relative;">
+              <h3 style="width: 90%; text-align: center; margin: 5px;">Trend Files Selection</h3>
+              <button type="button"
+                style="position: absolute; top: 0; right: 0; background-color: #dc3545; justify-content: right; color: white; width: 6%; padding: 3px 8px;"
+                onclick="closeTrendModal()">X</button>
+            </div>
+
+            <div style="display: flex; width:100%; margin-top: 20px;">
+              <label for="trend_file_select" style="width: 200px;">Select Trend File:</label>
+              <select id="trend_file_select" name="trend_file_select" class="kpi-select" style="width: 100%;" required>
+                <option value="">Select trend file</option>
+              </select>
+            </div>
+
+            <div class="kpi-actions" style="margin-top: 24px;">
+              <button type="button" class="kpi-btn-secondary" onclick="closeTrendModal()">Cancel</button>
+              <button type="button" class="kpi-btn-primary" onclick="downloadTrendFile()" style="margin-left: 8px;">
+                <i class="fas fa-download"></i> Download File
+              </button>
+            </div>
+          </form>
+        </div>
+      </div> <!-- /trendModal -->
+
+      <!-- MAPPING EDITOR MODAL -->
+      <div id="mappingModal" class="modalpage" style="height: 100%; margin-top: -20px;">
+        <div class="modalpage-content" style="min-height: 60%; width: 850px; max-height: 90vh; overflow-y: auto;">
+          <div style="display: flex; gap:8px; width: 100%; position: relative;">
+            <h3 style="width: 90%; text-align: center; margin: 5px;"><i class="fas fa-sliders-h"></i> Configure KPI
+              Mapping</h3>
+            <button type="button"
+              style="position: absolute; top: 0; right: 0; background-color: #dc3545; justify-content: right; color: white; width: 40px; padding: 3px 8px;"
+              onclick="closeMappingModal()">X</button>
+          </div>
+
+          <p style="font-size: 11px; color: #d97706; margin-bottom: 15px; font-weight: 600; text-align: center;">
+            <i class="fas fa-info-circle"></i> Drag templates from the bottom section and drop them into a CSV's mapping
+            area.
+          </p>
+
+          <div class="mapping-container">
+            <!-- Current Mappings Section -->
+            <div class="mapping-section">
+              <h4>
+                <span>Existing CSV Mappings</span>
+                <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Templates assigned to CSVs)</span>
+              </h4>
+              <div id="mappingRowsContainer">
+                <div style="text-align: center; padding: 20px; color: #94a3b8;">Loading mapping configuration...</div>
+              </div>
+
+              <!-- Add new mapping row -->
+              <div class="add-mapping-row">
+                <input type="text" id="newCsvName" class="mapping-csv-input"
+                  placeholder="Enter new CSV file name (e.g. DAILY_KPI_MY_STATE)">
+                <button type="button" class="automation-btn" style="width: 120px; font-size: 10px; height: 32px;"
+                  onclick="addNewMappingRow()">
+                  <i class="fas fa-plus"></i> Add CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Available Templates Section -->
+            <div class="mapping-section">
+              <h4>Available Templates</h4>
+              <div id="availableTemplatesPills" class="available-templates-container">
+                <div style="text-align: center; width: 100%; color: #94a3b8;">Loading templates...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-actions" style="margin-top: 20px;">
+            <button type="button" class="kpi-btn-secondary" onclick="closeMappingModal()">Cancel</button>
+            <button type="button" class="kpi-btn-primary" onclick="saveMappingStructured()" style="margin-left: 8px;">
+              <i class="fas fa-save"></i> Apply Changes
+            </button>
+          </div>
+          <div id="mappingStatus" style="margin-top: 10px; font-size: 13px; font-weight: 600; text-align: center;">
+          </div>
+        </div>
+      </div>
+
+      <div id="Modal" class="modal">
+        <div class="modal-content" style="width: 80%; margin-top: 10px; height: 550px; margin-bottom: -30px;">
+          <span class="close" onclick="closeModal()">&times;</span>
+
+          <h2>Generate Report</h2>
+
+          <!-- Trend Files Multi Select -->
+          <label style="margin-top: -15px;">Select Trend Files:</label>
+          <div class="file-box" id="trend_file_container"></div>
+          </select>
+
+          <!-- Date Range -->
+          <div style="display: flex; gap : 15px; margin-top:15px;">
+            <label style="width: 100px;">From:</label>
+            <input type="date" id="start_date">
+
+            <label style="width: 100px;">To:</label>
+            <input type="date" id="end_date">
+          </div>
+
+          <!-- Buttons -->
+          <div style="display: flex; gap : 5px; margin-top:20px;">
+            <button onclick="exportReport()">Export</button>
+            <button id="downloadBtn" onclick="downloadReport()" disabled>
+              Download
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- OUTPUTS TABLE (similar to sleeping_cell style) -->
+      <div class="table-scroll">
+        <table id="kpi-table">
+          <thead>
+            <th>ID</th>
+            <th>File Name</th>
+            <th>Template Name</th>
+            <th>Created By</th>
+            <th>Uploaded At</th>
+            <th>Started At</th>
+            <th>Finished At</th>
+            <th>Status</th>
+            <th>Download</th>
+            <th>Summary</th>
+            <th>Delete</th>
+
+
+          </thead>
+          <tbody>
+            {% if kpi_reports %}
+            {% for job in kpi_reports %}
+            <tr id="row-{{ job.job_id }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ job.job_id }}</td>
+              <td>{{ job.template_id }}</td>
+              <td>{{ job.created_by }}</td>
+              <td>{{ job.uploaded_at }}</td>
+              <td>{{ job.started_at or '-' }}</td>
+              <td>{{ job.finished_at or '-' }}</td>
+              <td class="kpi-status">
+                {% set s = (job.status or '') %}
+                {% if s == 'Queued' or s == 'Pending' %}
+                <span class="kpi-status-badge kpi-status-pending">
+                  <i class="fas fa-clock"></i>Queued
+                </span>
+                {% elif s == 'Running' %}
+                <span class="kpi-status-badge kpi-status-running">
+                  <i class="fas fa-spinner fa-spin"></i>Running
+                </span>
+                {% elif s == 'Finished' or s == 'Success' %}
+                <span class="kpi-status-badge kpi-status-success">
+                  <i class="fas fa-check-circle"></i>Finished
+                </span>
+                {% elif s == 'Failed' %}
+                <span class="kpi-status-badge kpi-status-failed">
+                  <i class="fas fa-times-circle"></i>Failed
+                </span>
+                {% else %}
+                {{ s }}
+                {% endif %}
+              </td>
+              <td>
+                <i class="fas fa-download" style="color: green; font-size:18px; cursor:pointer;" title="Download"
+                  onclick="downloadKpiReport('{{ job.job_id }}')"></i>
+              </td>
+
+
+              <td class="kpi-status" id="trend-status-{{ job.job_id }}">
+                {% set t = (job.trend_status or '') %}
+
+                {% if t == 'START' or t == 'queued' %}
+                <span onclick="startTrend('{{ job.job_id }}')" id="btn-{{ job.job_id }}"
+                  class="kpi-status-badge kpi-status-pending">
+                  <i class="fas fa-play-circle"></i>Start
+                </span>
+
+                {% elif t == 'running' %}
+                <span class="kpi-status-badge kpi-status-running">
+                  <i class="fas fa-spinner fa-spin"></i>Running
+                </span>
+
+                {% elif t == 'finished' or t == 'success' %}
+                <span class="kpi-status-badge kpi-status-success">
+                  <i class="fas fa-check-circle"></i>Finished
+                </span>
+
+                {% elif t == 'failed' %}
+                <span onclick="startTrend('{{ job.job_id }}')" id="btn-{{ job.job_id }}"
+                  class="kpi-status-badge kpi-status-failed">
+                  <i class="fas fa-times-circle"></i>Failed
+                </span>
+
+                {% else %}
+                {{ t }}
+                {% endif %}
+              </td>
+              <td>
+                <i class="fas fa-trash-alt" style="color: red; font-size:18px; cursor:pointer;" title="Delete"
+                  onclick="deleteKpiJob('{{ job.job_id }}')"></i>
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td colspan="9" style="text-align:center; color:#6b7280;">
+                No KPI automation jobs yet. Click "KPI Automation Job" to create a new one.
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+
+      </div>
+
+      <div id="kpi-pagination" class="pagination-container">
+        <!-- Pagination controls dynamically generated via JS -->
+      </div>
+
+    </div> <!-- /kpi-page-container -->
+  </div>
+
+  <script>
+    // Open/close modal (same function names/pattern as sleeping_cell)
+    function openUploadModal() {
+      const modal = document.getElementById('uploaddocument');
+      if (modal) modal.style.display = 'block';
+    }
+
+    function closepageModal() {
+      const modal = document.getElementById('uploaddocument');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function openTemplateModal() {
+      const modal = document.getElementById('templateModal');
+      if (modal) modal.style.display = 'block';
+      toggleTemplateOptions();
+    }
+
+    function closeTemplateModal() {
+      const modal = document.getElementById('templateModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function toggleTemplateOptions() {
+      const isCreate = document.querySelector('input[name="template_action"][value="create"]').checked;
+      const createSection = document.getElementById('createTemplateSection');
+      const createInput = document.getElementById('new_template_name');
+
+      if (isCreate) {
+        if (createSection) createSection.style.display = 'block';
+        if (createInput) createInput.required = true;
+      } else {
+        if (createSection) createSection.style.display = 'none';
+        if (createInput) createInput.required = false;
+      }
+    }
+
+    function updateDownloadLink() {
+      const select = document.getElementById('edit_template_id');
+      const link = document.getElementById('downloadTemplateLink');
+      if (select && link) {
+        const val = select.value;
+        if (val) {
+          link.href = `/api/kpi-automation/download-template/${encodeURIComponent(val)}`;
+        } else {
+          link.href = '#';
+        }
+      }
+    }
+
+    function checkDownloadSelection(event) {
+      const link = document.getElementById('downloadTemplateLink');
+      if (link && link.getAttribute('href') === '#') {
+        event.preventDefault();
+        alert("Please select a Base Template first to download it.");
+      }
+    }
+
+    // --- Pagination Logic ---
+    let kpiCurrentPage = 1;
+    const kpiPageSize = 14;
+
+
+    function updateKpiPagination() {
+      const table = document.getElementById("kpi-table");
+      if (!table) return;
+
+      const tbody = table.querySelector("tbody");
+      if (!tbody) return;
+
+      const allRows = Array.from(tbody.getElementsByTagName("tr"));
+
+      const totalRows = allRows.length;
+      const totalPages = Math.ceil(totalRows / kpiPageSize);
+
+      const paginationContainer = document.getElementById("kpi-pagination");
+      if (!paginationContainer) return;
+
+      paginationContainer.innerHTML = "";
+
+      if (totalPages <= 1) {
+        allRows.forEach(row => row.style.display = "");
+        return;
+      }
+
+      // ===== PREV BUTTON =====
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "pagination-btn";
+      prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+      prevBtn.disabled = kpiCurrentPage === 1;
+      prevBtn.onclick = () => {
+        kpiCurrentPage--;
+        updateKpiPagination();
+      };
+      paginationContainer.appendChild(prevBtn);
+
+      // ===== PAGE RANGE LOGIC (WITH …) =====
+      let startPage = Math.max(1, kpiCurrentPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+
+      if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+      }
+
+      // First page + dots
+      if (startPage > 1) {
+        addPageBtn(1, paginationContainer);
+
+        if (startPage > 2) {
+          const dots = document.createElement("span");
+          dots.className = "pagination-info";
+          dots.textContent = "...";
+          paginationContainer.appendChild(dots);
+        }
+      }
+
+      // Middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        addPageBtn(i, paginationContainer);
+      }
+
+      // Last page + dots
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const dots = document.createElement("span");
+          dots.className = "pagination-info";
+          dots.textContent = "...";
+          paginationContainer.appendChild(dots);
+        }
+
+        addPageBtn(totalPages, paginationContainer);
+      }
+
+      // ===== NEXT BUTTON =====
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "pagination-btn";
+      nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+      nextBtn.disabled = kpiCurrentPage === totalPages;
+      nextBtn.onclick = () => {
+        kpiCurrentPage++;
+        updateKpiPagination();
+      };
+      paginationContainer.appendChild(nextBtn);
+
+      // ===== SHOW ROWS =====
+      const startIndex = (kpiCurrentPage - 1) * kpiPageSize;
+      const endIndex = startIndex + kpiPageSize;
+
+      allRows.forEach((row, index) => {
+        row.style.display = (index >= startIndex && index < endIndex) ? "" : "none";
+      });
+    }
+
+    function addPageBtn(i, container) {
+      const btn = document.createElement("button");
+      btn.className = `pagination-btn ${i === kpiCurrentPage ? 'active' : ''}`;
+      btn.textContent = i;
+      btn.onclick = () => { kpiCurrentPage = i; updateKpiPagination(); };
+      container.appendChild(btn);
+    }
+
+    function deleteKpiJob(jobId) {
+      if (!jobId) return;
+      if (!confirm("Are you sure you want to delete this job?")) return;
+
+      fetch(`/delete-kpi-job/${encodeURIComponent(jobId)}`, {
+        method: 'POST'
+      })
+        .then(res => {
+          if (res.ok) {
+            const row = document.getElementById(`row-${jobId}`);
+            if (row) row.remove();
+          } else {
+            alert("Failed to delete job. Please try again.");
+          }
+        })
+        .catch(err => {
+          console.error("Delete error:", err);
+          alert("An error occurred while deleting the job.");
+        });
+    }
+
+    function downloadKpiReport(jobId) {
+      if (!jobId) return;
+      window.location.href = `/download-kpi-report/${encodeURIComponent(jobId)}`;
+    }
+    function downloadprocessReport(jobId) {
+      if (!jobId) return;
+      window.location.href = `/download-process-report/${encodeURIComponent(jobId)}`;
+    }
+
+    // Poll /api/kpi-automation/jobs to update status, started_at, finished_at
+    function formatKpiDate(iso) {
+      return iso || '-';
+    }
+
+    // Trend Files Modal Functions
+    function openTrendModal() {
+      const modal = document.getElementById('trendModal');
+      if (modal) modal.style.display = 'block';
+      fetchTrendFiles();
+    }
+
+    function closeTrendModal() {
+      const modal = document.getElementById('trendModal');
+      if (modal) modal.style.display = 'none';
+    }
+    function openModal() {
+      const modal = document.getElementById('Modal');
+      if (modal) modal.style.display = 'block';
+      fetchTrendFiles1();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('Modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function fetchTrendFiles() {
+      const select = document.getElementById('trend_file_select');
+      if (!select || select.options.length > 1) return; // Already loaded or no select
+
+      try {
+        const response = await fetch('/get-trend-files');
+        const data = await response.json();
+        if (data.status === 'success') {
+          data.files.forEach(file => {
+            const option = document.createElement('option');
+            option.value = file;
+            option.textContent = file;
+            select.appendChild(option);
+          });
+        } else {
+          alert('Error loading trend files: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+
+    function downloadTrendFile() {
+      const select = document.getElementById('trend_file_select');
+      const filename = select.value;
+      if (!filename) {
+        alert('Please select a file');
+        return;
+      }
+      window.location.href = `/download-trend-file/${encodeURIComponent(filename)}`;
+    }
+
+    function populateTemplateDropdowns() {
+      fetch('/api/kpi-automation/templates')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.templates) {
+            const dropdowns = [
+              document.getElementById('template_id'),
+              document.getElementById('edit_template_id')
+            ];
+
+            dropdowns.forEach(dropdown => {
+              if (!dropdown) return;
+              dropdown.innerHTML = '<option value="">Select template</option>';
+              for (const key of Object.keys(data.templates)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = key;
+                dropdown.appendChild(opt);
+              }
+            });
+          }
+        })
+        .catch(err => console.error("Error fetching templates:", err));
+    }
+
+    function renderKpiStatus(status) {
+      const s = (status || '').toLowerCase();
+      if (!s) return '-';
+      if (s === 'queued' || s === 'pending') {
+        return '<span class="kpi-status-badge kpi-status-pending"><i class="fas fa-clock"></i>Queued</span>';
+      }
+      if (s === 'running') {
+        return '<span class="kpi-status-badge kpi-status-running"><i class="fas fa-spinner fa-spin"></i>Running</span>';
+      }
+      if (s === 'finished' || s === 'success') {
+        return '<span class="kpi-status-badge kpi-status-success"><i class="fas fa-check-circle"></i>Finished</span>';
+      }
+      if (s === 'failed') {
+        return '<span class="kpi-status-badge kpi-status-failed"><i class="fas fa-times-circle"></i>Failed</span>';
+      }
+      return status;
+    }
+
+    function pollKpiJobs() {
+      fetch('/api/kpi-automation/jobs')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data || !data.jobs) return;
+          data.jobs.forEach(job => {
+            const rowId = job.job_id;
+            const row = document.getElementById(`row-${rowId}`);
+            if (!row) return;
+            const cells = row.getElementsByTagName('td');
+            if (cells.length >= 8) {
+              // Columns: 0=ID, 1=Job ID, 2=Template ID, 3=Created By, 4=Uploaded, 5=Started, 6=Finished, 7=Status
+              cells[5].textContent = formatKpiDate(job.started_at);
+              cells[6].textContent = formatKpiDate(job.finished_at);
+              cells[7].innerHTML = renderKpiStatus(job.status);
+              cells[7].className = 'kpi-status';
+            }
+          });
+        })
+        .catch(() => { });
+    }
+
+    function startPolling() {
+      // Background polling removed per user request. 
+      // Status will be updated only when the page is reloaded.
+      pollKpiJobs();
+    }
+
+    function stopPolling() {
+      if (window._kpiPollInterval) {
+        clearInterval(window._kpiPollInterval);
+        window._kpiPollInterval = null;
+      }
+    }
+
+    // Run button click - upload, then start polling
+    document.addEventListener('DOMContentLoaded', () => {
+      populateTemplateDropdowns();
+      startPolling();
+      updateKpiPagination(); // Initialize pagination
+
+      const runBtn = document.getElementById('runBtn');
+      const loadingAnimation = document.getElementById('loadingAnimation');
+
+      if (runBtn) {
+        runBtn.addEventListener('click', () => {
+          const form = document.getElementById('uploadForm1');
+          if (!form) return;
+
+          const formData = new FormData(form);
+
+          runBtn.disabled = true;
+          if (loadingAnimation) loadingAnimation.style.display = 'block';
+
+          fetch('/upload-kpi-automation', {
+            method: 'POST',
+            body: formData
+          })
+            .then(async res => {
+              const data = await res.json();
+              if (!res.ok) {
+                const errorMsg = data.message || "Upload failed";
+                throw new Error(errorMsg);
+              }
+              return data;
+            })
+            .then(data => {
+              console.log("KPI job started:", data.job_id || '');
+              if (loadingAnimation) loadingAnimation.style.display = 'none';
+              closepageModal();
+              location.reload();
+            })
+            .catch(err => {
+              console.error(err);
+              alert(err.message || "Upload failed. Please try again.");
+              if (loadingAnimation) loadingAnimation.style.display = 'none';
+              runBtn.disabled = false;
+            });
+        });
+      }
+    });
+
+    document.querySelectorAll(".updateKPIButton").forEach(button => {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        const jobId = this.dataset.jobId;
+        const statusEl = document.getElementById(`kpi-update-status-${jobId}`);
+
+        // 🚫 If already finished → do nothing
+        if (statusEl.dataset.completed === "1") return;
+
+        // ⏳ Running
+        statusEl.className = "kpi-status-badge kpi-status-running";
+        statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running';
+
+        // Disable click
+        this.style.pointerEvents = "none";
+
+        fetch(`/update-kpi-trend/${jobId}`)
+          .then(response => response.json())
+          .then(data => {
+            // ✅ Finished
+            statusEl.className = "kpi-status-badge kpi-status-success";
+            statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Finished';
+
+            // Update state
+            statusEl.dataset.completed = "1";
+          })
+          .catch(error => {
+            console.error(error);
+
+            // ❌ Failed
+            statusEl.className = "kpi-status-badge kpi-status-failed";
+            statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Failed';
+          })
+          .finally(() => {
+            this.style.pointerEvents = "auto";
+          });
+      });
+    });
+
+
+    function getBadgeHTML(status) {
+      status = (status || "").toLowerCase();
+
+      if (status === "START" || status === "queued") {
+        return `<span class="kpi-status-badge kpi-status-pending">
+            <i class="fas fa-clock"></i>Start
+        </span>`;
+      }
+
+      if (status === "running") {
+        return `<span class="kpi-status-badge kpi-status-running">
+            <i class="fas fa-spinner fa-spin"></i>Running
+        </span>`;
+      }
+
+      if (status === "finished" || status === "success") {
+        return `<span class="kpi-status-badge kpi-status-success">
+            <i class="fas fa-check-circle"></i>Finished
+        </span>`;
+      }
+
+      if (status === "failed") {
+        return `<span class="kpi-status-badge kpi-status-failed">
+            <i class="fas fa-times-circle"></i>Failed
+        </span>`;
+      }
+
+      return status;
+    }
+
+    function startTrend(jobId) {
+      const btn = document.getElementById(`btn-${jobId}`);
+      const statusCell = document.getElementById(`trend-status-${jobId}`);
+
+      if (btn) btn.disabled = true;
+
+      // 🔄 Reset UI
+      if (statusCell) {
+        statusCell.innerHTML = getBadgeHTML("running");
+      }
+
+      fetch(`/update-kpi-trend/${jobId}`, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || "Started");
+
+          if (statusCell) {
+            statusCell.innerHTML = getBadgeHTML(data.status);
+          }
+
+          if (data.status === "running") {
+            pollStatus(jobId);
+          } else {
+            if (btn) btn.disabled = false;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("❌ Failed to start trend update");
+          if (btn) btn.disabled = false;
+        });
+    }
+
+
+    // 🔁 Poll status
+    function pollStatus(jobId) {
+      const statusCell = document.getElementById(`trend-status-${jobId}`);
+      const btn = document.getElementById(`btn-${jobId}`);
+
+      const interval = setInterval(() => {
+        fetch(`/trend-status/${jobId}`)
+          .then(res => res.json())
+          .then(data => {
+            const status = data.status;
+
+            if (statusCell) {
+              statusCell.innerHTML = getBadgeHTML(status);
+            }
+
+            if (status === "completed") {
+              clearInterval(interval);
+              alert("✅ Trend update completed!");
+            }
+
+            if (status === "failed") {
+              clearInterval(interval);
+              alert("❌ Trend update failed!");
+              if (btn) btn.disabled = false; // 🔁 allow retry
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            clearInterval(interval);
+            if (btn) btn.disabled = false;
+          });
+      }, 3000);
+    }
+
+
+    async function fetchTrendFiles1() {
+      const container = document.getElementById('trend_file_container');
+      if (!container) return;
+
+      container.innerHTML = "Loading...";
+
+      try {
+        const response = await fetch('/get-trend-files');
+        const data = await response.json();
+
+        container.innerHTML = "";
+
+        if (data.status === 'success') {
+          data.files.forEach(file => {
+
+            const div = document.createElement('div');
+            div.className = 'file-item';
+
+            const id = "file_" + Math.random().toString(36).substr(2, 9);
+
+            div.innerHTML = `
+		  <div class="checkbox-wrapper">
+			<input type="checkbox" id="${id}" value="${file}">
+			<label for="${id}">${file}</label>
+		  </div>
+		`;
+
+            // click anywhere to toggle checkbox
+            div.onclick = (e) => {
+              if (e.target.tagName !== "INPUT") {
+                const cb = div.querySelector('input');
+                cb.checked = !cb.checked;
+              }
+            };
+
+            container.appendChild(div);
+          });
+
+        } else {
+          container.innerHTML = "Error loading files";
+        }
+
+      } catch (error) {
+        console.error(error);
+        container.innerHTML = "Failed to load files";
+      }
+    }
+
+    function enableMultiSelectToggle(select) {
+      select.addEventListener('mousedown', function (e) {
+        e.preventDefault(); // stop default Ctrl behavior
+
+        const option = e.target;
+
+        if (option.tagName === 'OPTION') {
+          option.selected = !option.selected;
+        }
+      });
+    }
+
+    async function exportReport() {
+      const selectedFiles = Array.from(
+        document.querySelectorAll('#trend_file_container input:checked')
+      ).map(cb => cb.value);
+
+      const startDate = document.getElementById('start_date').value;
+      const endDate = document.getElementById('end_date').value;
+
+      if (selectedFiles.length === 0) {
+        alert("Please select at least one file");
+        return;
+      }
+
+      if (!startDate || !endDate) {
+        alert("Please select date range");
+        return;
+      }
+
+      try {
+        const response = await fetch('/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            files: selectedFiles,
+            start_date: startDate,
+            end_date: endDate
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          const file = data.file;
+          const link = document.createElement('a');
+          link.href = `/download-report?file=${encodeURIComponent(file)}`;
+          link.download = file;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          alert("Error: " + data.message);
+        }
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function downloadReport() {
+      const btn = document.getElementById('downloadBtn');
+      const filePath = btn.dataset.file;
+
+      if (!filePath) {
+        alert("No file available");
+        return;
+      }
+
+      window.location.href = `/download-report?file=${encodeURIComponent(filePath)}`;
+    }
+
+    // --- KPI Mapping Functions (Redesigned Drag & Drop) ---
+    let availableTemplates = [];
+    let currentMapping = {};
+
+    async function openMappingModal() {
+      const modal = document.getElementById('mappingModal');
+      const rowsContainer = document.getElementById('mappingRowsContainer');
+      const templatesContainer = document.getElementById('availableTemplatesPills');
+      const statusDiv = document.getElementById('mappingStatus');
+
+      statusDiv.textContent = "";
+      modal.style.display = 'flex';
+      rowsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading mapping configuration...</div>';
+      templatesContainer.innerHTML = '<div style="text-align: center; width: 100%; color: #94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading templates...</div>';
+
+      try {
+        // 1. Fetch Mapping
+        const mapResp = await fetch('/api/kpi-automation/get-mapping');
+        const mapData = await mapResp.json();
+
+        // 2. Fetch Templates
+        const tempResp = await fetch('/api/kpi-automation/templates');
+        const tempData = await tempResp.json();
+
+        if (mapData.status === 'success' && tempData.status === 'success') {
+          currentMapping = mapData.content || {};
+          availableTemplates = Object.keys(tempData.templates || {});
+
+          renderMappingUI();
+        } else {
+          statusDiv.style.color = 'red';
+          statusDiv.textContent = "Error loading configuration: " + (mapData.message || tempData.message);
+        }
+      } catch (err) {
+        statusDiv.style.color = 'red';
+        statusDiv.textContent = "Error: Failed to fetch mapping data";
+        console.error(err);
+      }
+    }
+
+    function closeMappingModal() {
+      document.getElementById('mappingModal').style.display = 'none';
+      document.getElementById('mappingStatus').textContent = "";
+    }
+
+    function renderMappingUI() {
+      const rowsContainer = document.getElementById('mappingRowsContainer');
+      const templatesContainer = document.getElementById('availableTemplatesPills');
+
+      rowsContainer.innerHTML = '';
+      templatesContainer.innerHTML = '';
+
+      // Render Existing Mappings
+      const entries = Object.entries(currentMapping);
+      if (entries.length === 0) {
+        rowsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">No CSV mappings found. Add one below.</div>';
+      } else {
+        entries.forEach(([csvName, templates]) => {
+          addMappingRowToUI(csvName, Array.isArray(templates) ? templates : [templates]);
+        });
+      }
+
+      // Render Available Templates (Source)
+      if (availableTemplates.length === 0) {
+        templatesContainer.innerHTML = '<div style="text-align: center; width: 100%; color: #94a3b8;">No templates available. Create one first.</div>';
+      } else {
+        availableTemplates.forEach(templateName => {
+          const pill = createTemplatePill(templateName, true);
+          templatesContainer.appendChild(pill);
+        });
+      }
+    }
+
+    function addMappingRowToUI(csvName, templates) {
+      const rowsContainer = document.getElementById('mappingRowsContainer');
+      const row = document.createElement('div');
+      row.className = 'mapping-row';
+      row.dataset.csv = csvName;
+
+      row.innerHTML = `
+        <div class="mapping-csv-name">
+          <i class="fas fa-cog" style="color: #94a3b8; font-size: 14px; margin-right: 8px;"></i>
+          ${csvName}
+        </div>
+        <div class="mapping-templates-dropzone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${csvName.replace(/'/g, "\\'")}')">
+        </div>
+        <button type="button" style="background:none; border:none; color:#ef4444; cursor:pointer; padding: 0 10px;" title="Remove CSV" onclick="removeCsvRow('${csvName.replace(/'/g, "\\'")}')">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      `;
+
+      const dropzone = row.querySelector('.mapping-templates-dropzone');
+      templates.forEach(tName => {
+        const pill = createTemplatePill(tName, false, csvName);
+        dropzone.appendChild(pill);
+      });
+
+      rowsContainer.appendChild(row);
+    }
+
+    function createTemplatePill(name, isSource, rowCsvName = null) {
+      const pill = document.createElement('div');
+      pill.className = `template-pill ${isSource ? 'source' : ''}`;
+      pill.textContent = name;
+      pill.draggable = true;
+
+      pill.ondragstart = (e) => {
+        e.dataTransfer.setData('templateName', name);
+        e.dataTransfer.effectAllowed = 'copy';
+      };
+
+      if (!isSource) {
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeTemplateFromMapping(rowCsvName, name);
+        };
+        pill.appendChild(removeBtn);
+      }
+
+      return pill;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, csvName) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      const templateName = e.dataTransfer.getData('templateName');
+
+      if (!templateName) return;
+
+      if (!currentMapping[csvName]) currentMapping[csvName] = [];
+      if (!Array.isArray(currentMapping[csvName])) currentMapping[csvName] = [currentMapping[csvName]];
+
+      if (!currentMapping[csvName].includes(templateName)) {
+        currentMapping[csvName].push(templateName);
+        renderMappingUI();
+      }
+    }
+
+    function removeTemplateFromMapping(csvName, templateName) {
+      if (currentMapping[csvName]) {
+        currentMapping[csvName] = currentMapping[csvName].filter(t => t !== templateName);
+        renderMappingUI();
+      }
+    }
+
+    function removeCsvRow(csvName) {
+      if (confirm(`Remove mapping for ${csvName}?`)) {
+        delete currentMapping[csvName];
+        renderMappingUI();
+      }
+    }
+
+    function addNewMappingRow() {
+      const input = document.getElementById('newCsvName');
+      const name = input.value.trim();
+      if (!name) return;
+
+      if (currentMapping[name]) {
+        alert("This CSV name already exists in mapping.");
+        return;
+      }
+
+      currentMapping[name] = [];
+      input.value = '';
+      renderMappingUI();
+    }
+
+    async function saveMappingStructured() {
+      const statusDiv = document.getElementById('mappingStatus');
+      statusDiv.textContent = "Saving changes...";
+      statusDiv.style.color = '#1e88e5';
+
+      try {
+        const response = await fetch('/api/kpi-automation/update-mapping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: currentMapping })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+          statusDiv.style.color = 'green';
+          statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Mapping updated and saved to 89 server successfully!';
+          setTimeout(() => {
+            closeMappingModal();
+          }, 2000);
+        } else {
+          statusDiv.style.color = 'red';
+          statusDiv.textContent = "Error: " + data.message;
+        }
+      } catch (err) {
+        statusDiv.style.color = 'red';
+        statusDiv.textContent = "Error: Connection failed";
+        console.error(err);
+      }
+    }
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const currentPath = window.location.pathname;
+      const buttons = document.querySelectorAll(".navigation_bar button");
+
+      buttons.forEach(button => {
+        const page = button.getAttribute("data-page");
+        if (currentPath.startsWith(page)) {
+          button.classList.add("active");
+        }
+      });
+    });
+  </script>
+
+
+</body>
+
+</html>

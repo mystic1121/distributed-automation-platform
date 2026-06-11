@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/Jio_logo.png') }}" sizes="32x32" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+	  background-image: url("{{ url_for('static', filename='JPMS.png') }}");
+	  background-size: 100vw 100vh;
+    }
+
+    .wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+	  
+    }
+
+    .left-panel {
+      width: 1050px; /* 7 times original width */
+      padding: 20px;
+      background-color: transparent;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    .left-panel img {
+      width: 900px;  /* Approx 7 times bigger than 150px */
+      height: auto;
+	  margin-top: 10px;
+     border-radius: 3px;
+    }
+
+    .right-panel {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding-right: 40px;
+	  /* padding-top: 10 px; */
+      background-color: transparent;
+    }
+
+    .login-container {
+      width: 100%;
+	  max-width: 400px;
+      padding: 20px;
+      
+    }
+
+    .login-container h2 {
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .ims-text {
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: #555;
+      word-wrap: break-word;
+    }
+
+    .error-message {
+      color: red;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin: 10px 0 5px;
+    }
+
+    input {
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+	
+	.logo-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: nowrap;
+			margin-top: 20px;
+			
+        }
+
+	.logo-box {
+		
+		text-align: center;
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+		border-radius: 12px;
+		padding: 10px;
+		border-radius: 8px;
+		box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
+		
+	}
+	.logo-box img {
+	  width: 72px;    /* tweak to taste: 64–96px usually looks good */
+	  height: 72px;
+	  border-radius: 8px;
+	  display: block; /* removes inline-img baseline gap */
+	}
+	.logo-box:nth-child(1):hover {
+		transform: scale(1.1);
+		box-shadow: 0 0 25px rgba(0, 123, 255, 0.4); /* blue for Jio */
+	}
+	.logo-box:nth-child(2):hover {
+		transform: scale(1.1);
+		box-shadow: 0 0 15px rgba(255, 165, 0, 0.6); /* orange for Hondutel */
+	}
+
+	.logo-box:nth-child(3):hover {
+		transform: scale(1.1);
+		box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* black for Antel */
+	}
+	.welcome-text {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #555;
+        }
+	.input-icon {
+	margin-top: 20px;
+	}
+	
+	.logo-box.is-selected {
+		  transform: scale(1.1);
+		  box-shadow: 0 0 18px rgba(0,0,0,0.35);
+		  outline: 2px solid rgba(0,0,0,0.15);
+		  outline-offset: 3px;
+		}
+		
+	.logo-box[data-company="jio"].is-selected {
+		  box-shadow: 0 0 22px rgba(0,123,255,0.45);
+		}
+	.logo-box[data-company="hondutel"].is-selected {
+		  box-shadow: 0 0 22px rgba(255,165,0,0.55);
+		}
+	.logo-box[data-company="antel"].is-selected {
+		  box-shadow: 0 0 22px rgba(0,0,0,0.45);
+		}
+		
+	.terms-text {
+		font-size : 14px;
+	}
+	
+.icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #555;
+}
+
+
+
+
+/* Modal Styles */
+
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 400px;
+	
+	
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+	
+.form-group {
+    flex-direction: column;
+	width: 90%; 
+}
+	
+textarea {
+    width: 100%;  /* Make it responsive within its container */
+    max-width: 350px;  /* Limit the width */
+    height: 60px; /* Fixed height */
+    max-height: 100px;  /* Optional: limit height */
+    box-sizing: border-box;  /* Ensure padding is included in width/height calculations */
+}
+
+
+
+  </style>
+</head>
+<body>
+	
+  <div class="wrapper">
+    <!-- Big Image on Top-Left -->
+	
+    
+	
+    <!-- Right Side: Login Form -->
+    <div class="right-panel">
+	
+
+      <div class="login-container">
+        <img src="{{ url_for('static', filename='images/Jio_logo_png.png') }}" alt="Jio" style="width:320px;height:95px; margin-bottom: 10px;">
+		<br>
+        <p class="ims-text" style="color: #004080;font-size: 25px;margin-top: 5px;">Project Management System</p>
+		
+		
+		<div class="logo-container">
+        <div class="logo-box {{ 'is-selected' if selected_company == 'jio' else '' }}" data-company="jio">
+		  <form method="GET" action="{{ url_for('home') }}">
+			<input type="hidden" name="company" value="jio">
+			<input type="hidden" name="next_page" value="{{ next_page }}">
+			<button type="submit" style="border:none;background:none;padding:0;">
+			  <img src="{{ url_for('static', filename='images/Jio_logo_3.png') }}" alt="Jio">
+			</button>
+		  </form>
+		</div>
+
+		<div class="logo-box {{ 'is-selected' if selected_company == 'hondutel' else '' }}" data-company="hondutel">
+		  <form method="GET" action="{{ url_for('home') }}">
+			<input type="hidden" name="company" value="hondutel">
+			<input type="hidden" name="next_page" value="{{ next_page }}">
+			<button type="submit" style="border:none;background:none;padding:0;">
+			  <img src="{{ url_for('static', filename='images/hondutel_logo.png') }}" alt="Hondutel">
+			</button>
+		  </form>
+		</div>
+
+		<div class="logo-box {{ 'is-selected' if selected_company == 'antel' else '' }}" data-company="antel">
+		  <form method="GET" action="{{ url_for('home') }}">
+			<input type="hidden" name="company" value="antel">
+			<input type="hidden" name="next_page" value="{{ next_page }}">
+			<button type="submit" style="border:none;background:none;padding:0;">
+			  <img src="{{ url_for('static', filename='images/antel_logo.png') }}" alt="Antel">
+			</button>
+		  </form>
+		</div>
+
+      </div>
+		
+		<div class="welcome-text">Select your project to launch the JPMS Dashboard</div>
+		<br>
+		
+        {% if error %}
+          <p class="error-message">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/login">
+			<input type="hidden" name="next_page" value="{{ next_page }}">
+			<input type="hidden" name="company" id="company-input" value="">
+			<div class="input-container">
+				<i class="fa fa-user icon"></i>
+				<input type="text" placeholder="Username" name="username" class="input-field">
+			</div>
+
+			<div class="input-container">
+				<i class="fa fa-lock icon"></i>
+				<input type="password" placeholder="Password" name="password" class="input-field" id="password-input">
+				<i class="fa fa-eye-slash toggle-password" id="togglePassword"></i>
+			</div>
+			
+			<div class="terms-text">
+				By clicking Login you agree to our
+				<a href="#" onclick="openTermsModal()">Terms and Conditions</a>
+				and confirm that you have read our
+				<a href="#" onclick="openprivacyModal()">Privacy Policy</a>.<br>
+				If you have any query please
+				<a href="#" onclick="openContactModal()">Click here</a>.
+			</div>
+
+					  <!-- Forgot Password Link -->
+			<!--		  
+		  <div style="text-align: right; margin-bottom: 15px;">
+			<a href="/forgot-password" style="font-size: 13px; color: #007bff; text-decoration: none;">Forgot Password?</a>
+		  </div>
+			-->
+
+          <button type="submit">Login</button>
+        </form>
+	</div>	
+	</div>
+		<!-- Modal for Contact Form -->
+		<div id="contactModal" class="modal">
+			<div class="modal-content">
+				<span class="close" onclick="closeContactModal()">&times;</span>
+				<h2 style="color: #004080;"> Contact JPMS Team  </h2>
+				<form id="contactForm" method="POST">
+					<div class="form-group"> 
+						<label>Email ID</label> 
+						<input type="email" id="email" placeholder="Enter email"> 
+						<label>User Name</label> 
+						<input type="text" style="width: 100%; height: 35px;" id="username" placeholder="User name"> 
+					</div> 
+					<div class="form-group"> 
+						<label for="query">Query:</label> 
+						<textarea id="query" placeholder="Add Remark" rows="4" style="width: 100%;"></textarea>
+					</div>
+				    <br><br>
+					<button type="button" onclick="submitQuery(event)" style="width: 200px;">Submit</button> </form>
+			</div>
+		</div>
+		<div id="termsModal" class="modal11">
+			<div class="modal11-content">
+				<div class="modal11-header">
+					<h2>Terms and Conditions for JPMS- Jio Project Management System</h2>
+					<span class="close" onclick="closeTermsModal()">&times;</span>
+				</div>
+				<div class="modal11-body" style="max-height:70vh; overflow-y:auto;">
+				<h3>1. Scope</h3>
+				<p>
+					1.1	JPMS - Jio Project Management System is a web based portal (‘Portal’), made available by Jio Platforms Limited and/or its affiliates (“Company”, “we,” “us” and “our”) located at 101, Saffron, Nr. Centre Point, Panchwati 5 Rasta, Ambawadi, Ahmedabad, Gujarat - 380006 India.
+				</p>
+				<p>
+					1.2 The Platform is designed to help employees and partners associated with the Company and/ or its affiliates. The services mainly include: (i) centralized document management of planning, product, and process guidelines with version control and secure access; (ii) RF planning data management with visualization capabilities and external tool integration; (iii) automated Cell DB and SSCVT creation through zero-touch processes and log file parsing; (iv) unified master database with real-time updates enabling site-level tracking and reporting; (v) end-to-end project rollout visibility through live dashboards and KPI tracking; (vi) inventory and stock management monitoring material movement from warehouse to site with serial number tracking; (vii) incident tracking system with escalation workflows, severity tagging and RCA management; (viii) dynamic BoQ calculation based on site configuration and equipment requirements; (ix) indigenous 3D mapping solutions utilizing open-source DSM, DEM, and building polygon data to support accurate RF planning with detailed terrain, clutter, and building height information for complex geographies; and (x) any other services provided by the Company from time to time ("Services") accessible through (i) compatible smart phones powered by Android, iOS and (ii) browser available on desktop monitors ("Device").
+				</p>
+				<p>
+					1.3 Your (“you”, “your” or “user”) use of the Platform is subject to these terms and conditions (“Terms”).
+				</p>
+				<p>
+					1.4 Your use of the Platform requires that you agree to these Terms and the privacy policy of the Platform. By registering or signing up to the Platform, or otherwise having access to, receiving, and/or using the Platform, you acknowledge to have read, understood and you consent to be governed and bound by these Terms and the privacy policy of the Platform. If you do not understand the Terms or the privacy policy of the Platform, or do not accept any part of them, then you should not use the Platform.
+				</p>
+				<p>
+					1.5 These Terms should be read in consonance with your enterprise employment terms and conditions.
+				</p>
+				<p>
+					1.6 The Terms are an electronic record in terms of the Information Technology Act, 2000 (as amended / re-enacted) (“IT Act") and rules thereunder, and is published in accordance with the provisions of Rule 3 (1) of Information Technology (Intermediaries Guidelines and Digital Media Ethics code) Rules, 2021 which mandates for publishing of rules and regulations, privacy policy and terms of use for access or usage of Platform. This electronic record is generated by a computer system and does not require any physical or digital signatures.
+				</p>
+				<p>
+					1.7 For avoidance of doubt, the term Platform is used in these Terms to mean the product which also includes the Portal or the Platform as and when relevant.
+				</p>
+				<h3>2. Privacy and Protection of Personal Information</h3>
+				<p>	
+					2.1 Please refer to the privacy policy of the portal available [here].
+				</p>
+				<h3>3. Modifications</h3>
+				<p>
+					3.1 Modifications of the Terms: The Company reserves the right to change the Terms under which the Services are offered, including but not limited to the charges, if any, associated with the use of the Services. The Terms may be further modified based on changes in the business, legal and regulatory requirements and will be updated online. We will make communicate any changes to these Terms to you. You are encouraged to periodically visit this page to review these Terms and any changes to it.
+				</p>
+				<p>
+					3.2 Modification of Services: The Company reserves the right to add, modify or delete any content or features available in the Services at any time at its sole discretion.
+				</p>
+				<h3>4. Links to Third Party Sites and Applications</h3>
+				<p>
+					4.1 The Platform may contain links to other web sites/applications ("Linked Sites"). The Linked Sites are not under the control of the Company and the Company is not responsible for the contents of any Linked Site, including without limitation any link contained in a Linked Site, or any changes or updates to a Linked Site or any information transmitted on a Linked Site. The inclusion of any link does not imply endorsement by the Company of the site or any association with its operators.
+				</p>
+				<p>
+					4.2 Any dealings with third parties (including advertisers) included within or available via a link from the Platform or participation in promotions, including the delivery of and the payment for goods and services, and any other terms, conditions, warranties or representations associated with such dealings or promotions, are solely between you and the advertiser or other third party. The Company shall not be responsible or liable for any part of any such dealings or promotions.
+				</p>
+				<p>
+					4.3 You acknowledge and agree that the use of any Linked Sites is governed by such third party’s terms of use, license agreement, privacy policy, or other such agreement. The Company disclaims any and all responsibility for any disclosure of information or any other practices of any third party. The Company expressly disclaims any warranty with respect to your personal or other information that may be collected, processed, shared or retained by any third party.
+				</p>
+				<h3>5. Intellectual Property Rights</h3>
+				<p>
+					5.1 The Company shall own title, interest and rights, including all related intellectual property rights, in/of the Platform including but not limited to object code of the Platform, features of services, which is/are protected by the applicable laws except the content owned by the user. You acknowledge that such ownership shall include all intellectual property rights arising from any suggestions, enhancement requests, recommendations or other information provided by the user, whether in the course of use of the Platform, your device or otherwise.
+				</p>
+				<h3>6. Use Limitations</h3>
+				<p>
+					6.1 Services offered by the Platform are intended solely for the purpose of availing Services provided by the Platform. You may not distribute, transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell any information, software, products or Services offered by the Platform.
+				</p>
+				<p>
+					6.2 As a condition of your use of the Platform, you warrant to the Company that you will not use the Platform for any purpose that is commercial, unlawful or prohibited by these Terms. You may not use the Platform in any manner which could damage, disable, overburden or impair the Services or interfere with any other party's use and enjoyment of the Platform. You are not entitled to use any kind of measures, mechanisms or tools (software or hardware) that could interfere with the functioning of the Platform or any of its Services.
+				</p>
+				<p>
+					6.3 You are not entitled to use any kind of measures, mechanisms or tools (software or hardware) that could interfere with the functioning of the Platform or any of its Services.
+				</p>
+				<p>
+					6.4 You may not use the Services and/or Platform if you are under the age of 18 years.
+				</p>
+				<h3>7. General</h3>
+				<p>7.1 You may be required to register in order to access Platform using the means and methodology as provided by the Company from time to time.</p>
+				<p>7.2 By using our Services you hereby agree to ensure that the explicit prohibitions mentioned in section 7.4 are at all times adhered to</p>
+				<p>7.3 Use Restriction: You must not access the Platform if you are a person who is either barred or otherwise legally prohibited from receiving or using the Service or any Services under the laws of India.</p>
+				<p>7.4 You shall not host, display, upload, modify, publish, transmit, update or share any information which:
+					<p>a) Belongs to another person and to which you do not have any right to;</p>
+					<p>b) Is grossly harmful, harassing, blasphemous, defamatory, obscene, pornographic, paedophilic, libellous, invasive of another’s privacy, hateful, or racially, ethnically objectionable, disparaging, relating or encouraging money laundering or gambling or otherwise unlawful in any manner whatsoever; or unlawfully threatening or unlawfully harassing including but not limited to “indecent representation of women” within the meaning of the Indecent Representation of Women (Prohibition) Act 1986;</p>
+					<p>c) Is misleading in any way;</p>
+					<p>d) Is patently offensive to the online community, such as sexually explicit content, or content that promotes obscenity, paedophilia, racism, bigotry, hatred or physical harm of any kind against any group or individual;</p>
+					<p>e) Harassing or advocates harassment of another person;</p>
+					<p>f) Involves the transmission of “junk mail”, “chained letters”, or unsolicited mass mailing or “spamming”;</p>
+					<p>g) Promotes illegal activities or conduct that is abusive, threatening, obscene, defamatory or libellous;</p>
+					<p>h) Infringes upon or violates any third party’s rights (including, but not limited to, intellectual property rights, rights of privacy or rights of publicity);</p>
+					<p>i) Promotes an illegal or unauthorised copy of another person’s copyrighted work;</p>
+					<p>j) Provides instructional information about illegal activities such as making and/ or buying illegal weapons, violating someone’s privacy, or providing or creating computer viruses;</p>
+					<p>k) Solicits gambling or engages in any gambling activity which we in our sole discretion believe is or could be construed to be as illegal;</p>
+					<p>l) Harms minors in any way;</p>
+					<p>m) Violates any law for the time being in force;</p>
+					<p>n) Impersonates another person;</p>
+					<p>o) Contains software viruses or any other computer code, files or programs designed to interrupt, destroy or limit the functionality of any computer resource; or contains any trojan horses, worms, time bombs, cancelbots, easter eggs or other computer programming routines that may damage, detrimentally interfere with, diminish value of, surreptiously intercept or expropriate any system, data or personal information;
+					<p>p) Threatens the unity, integrity, defence, security or sovereignty of India, friendly relations with foreign states, or public order or causes incitement to the commission of any cognizable offense or prevents investigation of any offense or is insulting any other nation.
+				</p>
+				<p>
+					7.5 Services may be made available for free of cost or for a specified cost as may be decided by the Company from time to time.
+				</p>
+				<p>				
+					7.6 Third-Party Fees: You may incur access or data fees from third parties (such as your internet provider or mobile carrier) in connection with your use of Services and of Platform. You are solely responsible for all such fees.
+				</p>
+				<p>7.7 Updates: Services originating from the Platform may communicate with the servers from time to time to check for available updates to the Services and to the functionality of the Platform, such as bug fixes, patches, enhanced functions, missing plug-ins and new versions (collectively, "Updates"). Your use of the Services you have installed requires that you have agreed to receive such automatically requested Updates.</p>
+				
+				<p>7.8 Accuracy of Information: You agree that the information entered by you while profile creation/Updation or using any of Services is true, current, complete and accurate in all respects. The Company is not responsible for any losses arising out of discrepancy in your data. You are solely responsible for maintaining confidentiality and security of your user account and for all activities that occur on or through your user account. The Company is not responsible for any losses arising out of the unauthorized use of your user account.</p>
+				<p>7.9 The user agrees and acknowledges that the Company shall send commercial communication to the user in relation to the Services availed by the Company.</p>
+				<h3>8. LIABILITY DISCLAIMER</h3>
+				<p>8.1 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE COMPANY BE LIABLE TO YOU FOR ANY SPECIAL, INCIDENTAL, INDIRECT, PUNITIVE OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF USE, LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF, OR INABILITY TO USE OR ACCESS, THE PLATFORM OR FOR ANY SECURITY BREACH OR ANY VIRUS, BUG, UNAUTHORIZED INTERVENTION, DEFECT, OR TECHNICAL MALFUNCTIONING OF THE PLATFORM, WHETHER OR NOT FORESEEABLE OR WHETHER OR NOT THE COMPANY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES, OR BASED ON ANY THEORY OF LIABILITY, INCLUDING BREACH OF CONTRACT OR WARRANTY, NEGLIGENCE OR OTHER TORTIOUS ACTION, OR ANY OTHER CLAIM ARISING OUT, OF OR IN CONNECTION WITH, YOUR USE OF, OR ACCESS TO, THE PLATFORM OR THE CONTENT. FURTHER, THE COMPANY SHALL NOT BE LIABLE TO YOU FOR ANY TEMPORARY DISABLEMENT, PERMANENT DISCONTINUANCE OR MODIFICATION OF THE PLATFORM BY THE COMPANY OR FOR ANY CONSEQUENCES RESULTING FROM SUCH ACTIONS.</p>
+				<p>8.2 YOU SHALL BE SOLELY RESPONSIBLE FOR OBTAINING AND MAINTAINING ANY EQUIPMENT AND ANCILLARY SERVICES (INCLUDING THE PAYMENT OF ANY ADDITIONAL FEES THEREFORE) REQUIRED TO CONNECT TO, ACCESS OR OTHERWISE USE THE SERVICES, INCLUDING, WITHOUT LIMITATION, MODEMS, HARDWARE, SERVERS, SOFTWARE, OPERATING SYSTEMS, NETWORKING, WEB SERVERS, INTERNET AND TELEPHONE SERVICE (COLLECTIVELY, “EQUIPMENT”). YOU WILL ALSO BE RESPONSIBLE FOR MAINTAINING THE SECURITY OF THE EQUIPMENT AND FOR ALL USES OF THE EQUIPMENT WITH OR WITHOUT YOUR KNOWLEDGE OR CONSENT.</p>
+				<p>8.3 YOU ARE SOLELY RESPONSIBLE FOR THE CONTENT AND OTHER MATERIALS YOU TRANSMIT THROUGH THE SERVICE OR SHARE WITH OTHER USERS OR RECIPIENTS. YOU WILL NOT TRANSMIT ANY CONTENT THAT YOU DID NOT CREATE OR THAT YOU DO NOT OWN ALL RIGHT, TITLE AND INTEREST IN AND TO, INCLUDING, WITHOUT LIMITATION, ALL COPYRIGHT AND RIGHTS OF PUBLICITY CONTAINED THEREIN.</p>
+				<p>8.4 THE COMPANY AND/OR ITS RESPECTIVE AFFILIATES MAKES NO REPRESENTATIONS ABOUT THE SUITABILITY, RELIABILITY, AVAILABILITY, TIMELINESS AND ACCURACY OF THE INFORMATION, SOFTWARE AND SERVICES AND RELATED CONTENT CONTAINED ON THE PLATFORM FOR ANY PURPOSE. ALL SUCH INFORMATION, SOFTWARE AND SERVICES AND RELATED CONTENT ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. THE COMPANY AND/OR ITS RESPECTIVE SUPPLIERS HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS WITH REGARD TO THIS INFORMATION, SOFTWARE, AND SERVICES AND RELATED CONTENT, INCLUDING ALL IMPLIED WARRANTIES AND CONDITIONS OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT.
+				<p>8.5 YOU SPECIFICALLY AGREE THAT THE COMPANY SHALL NOT BE RESPONSIBLE FOR UNAUTHORISED ACCESS TO OR ALTERATION OF YOUR TRANSMISSIONS OR DATA, ANY MATERIAL OR DATA SENT OR RECEIVED OR NOT SENT OR RECEIVED, OR ANY TRANSACTIONS ENTERED INTO THROUGH THE PLATFORM. YOU SPECIFICALLY AGREE THAT THE COMPANY IS NOT RESPONSIBLE OR LIABLE FOR ANY THREATENING, DEFAMATORY, OBSCENE, OFFENSIVE OR ILLEGAL SERVICES OR CONDUCT OF ANY OTHER PARTY OR ANY INFRINGEMENT OF ANOTHER'S RIGHTS, INCLUDING INTELLECTUAL PROPERTY RIGHTS. YOU SPECIFICALLY AGREE THAT THE COMPANY IS NOT RESPONSIBLE FOR ANY SERVICES SENT USING AND/OR INCLUDED IN THE PLATFORM BY ANY THIRD PARTY.
+				<h3>9. TERMINATION (TEMPORARY AND PERMANENT DISABLEMENT):</h3>
+				<p>
+					9.1 Unless otherwise provided in these Terms, the Services offered to you may be terminated by the Company without assigning any reasons at any time at the sole discretion of the Company. Upon termination/suspension, you shall not have the right to use or access the Platform /Services.
+				</p>
+				<p>
+					9.2 The Company reserves the right to suspend and/ or terminate your access to the Services in case of any non-adherence to these Terms and Conditions by you.
+				</p>
+				<h3>10. GOVERNING LAW AND DISPUTE RESOLUTION</h3>
+				<p>
+					10.1 These terms and conditions are governed and construed in accordance with the laws of India. The courts in Mumbai shall have exclusive jurisdiction to hear disputes arising out of these terms.
+				</p>
+				<h3>11. FORCE MAJEURE:</h3>
+				<p>						
+					11.1 The Company shall be under no liability whatsoever in the event of non-availability of any portion of the Platform or subscribed content occasioned by act of God, war, disease, revolution, riot, civil commotion, strike, lockout, flood, fire, failure of any public utility, manmade disaster, infrastructure failure or any other cause whatsoever beyond the control of the Company.
+				</p>
+				<h3>12. SEVERABILITY:</h3>
+				<p>
+					12.1 If any of the provisions of these Terms are deemed invalid, void, or for any reason unenforceable, that part of these Terms will be deemed severable and will not affect the validity and enforceability of any remaining provisions of these Terms.
+				</p>
+				<h3>13. CONTACT DETAILS:</h3>
+				<p>Jio.JPMSSupport@ril.com</p>
+				<!-- Add more sections as needed -->
+				</div>
+				
+			</div>
+		</div>
+		
+		<div id="privacyModal" class="modal11">
+			<div class="modal11-content">
+				<div class="modal11-header">
+					<h2>JPMS - Jio Project Management System Privacy Policy</h2>
+					<span class="close" onclick="closeprivacyModal()">&times;</span>
+				</div>
+				<div class="modal11-body" style="max-height:70vh; overflow-y:auto;">
+					<h3>Thank you for using JPMS - Jio Project Management System. Your privacy is important to us. To better protect your privacy and to help ensure a rewarding experience for all users, we provide this privacy policy.</h3>
+					<h3>1. Scope</h3>
+					<p>
+						JPMS - Jio Project Management System (hereinafter referred to as “Portal”, “we”, “our”, “us”) is committed to protecting and respecting your privacy.
+					</p>
+					<p>
+						1.1 This policy (this “Privacy Policy”), together with the Terms and Conditions of the Portal outlines the Portal’s privacy practices regarding the collection, use and safeguard of your information through the Portal and the services offered thereupon.
+					</p>
+					<p>
+						1.2 By using the Portal or registering or signing up for the Portal and submission of personal information; or if you are a minor, the submission of your personal information either by your parents (or your guardian) or by you with the permission of your parents (or guardian) to the Portal will be deemed as your acceptance of this Privacy Policy.
+					</p>
+					<p>
+						1.3 The Terms are an electronic record in terms of the Information Technology Act, 2000 (as amended/re-enacted) (“IT Act") and rules thereunder, and is published in accordance with the provisions of Rule 3 (1) of the Information Technology (Guidelines for Intermediaries and Digital Media Ethics Code) Rules, 2021, which mandates for publishing of rules and regulations, privacy policy and terms of use for access or usage of Portal. This electronic record is generated by a computer system and does not require any physical or digital signatures.
+					</p>
+					<h3>2. Changes to the Privacy Policy</h3>
+					<p>2.1 We are obligated to protect your information in accordance with Applicable laws and regulations.</p>
+					<p>2.2 This Privacy Policy is subject to modification based on changes in the business, legal and regulatory requirements and will be updated online. We will notify you whenever any change to the Privacy Policy are made. You are encouraged to periodically visit this page to review the Privacy Policy and any changes to it.</p>
+					<h3>3. Third Party Services</h3>
+					<p>3.1 Please note that your mobile service provider, internet service provider, mobile operating system provider, third party Applications including the Applications pre-loaded on your smart phones powered by Android platform or customized Android ROM (“Device”), websites that you access, third party operators may also collect, use and share information about you and your usage. We cannot control how these third parties collect, use, share or secure this information. For information about third-party privacy practices, please consult their respective privacy policies.</p>
+					<h3>4. Personal Information we collect:</h3>
+					<p>4.1 Personal information is defined as information that can be used to identify you and may include details such as your name, age, gender, contact information, products and services you are interested in or require more information about. Insofar as sensitive personal information is concerned, it will carry the meaning as may be defined by Applicable laws from time to time.</p>
+					<p>4.2 The following is the manner in which we collect, use, share and retain personal information:</p>
+					<p>4.2.1 Collection:</p>
+					<p>4.2.1.1 You agree that the Portal may collect such personal information, whenever relevant, to help providing you with information and to complete any transaction or provide any product you have requested or authorised. You also consent to the collection of certain personal information in the course of your Applying for the products and/or services.</p>
+					<h3>4.2.2 Usage:</h3>
+					<p>4.2.2.1 The App seeks this information either to (i) validate and process your request for the services of the App or information; (ii) to improve the quality of the App; (iii) to assist you to determine which services best meet your needs; or (iv) to facilitate our internal business operations, including the fulfilment of any legal and regulatory requirements; or (v) to provide you with recommendation about services you may be interested in, based on your use of the App; or (vi) to provide you with marketing communications and advertising that the App believe may be of interest of you ;or (vii) to facilitate your purchases .</p>
+					<h3>4.2.3 Sharing:</h3>
+					<p>4.2.3.1 We may disclose personal information to our affiliates when necessary to perform services on our behalf or on your behalf, to provide display advertising and promotional services, providing search results and links (including paid listings and links), providing customer service etc.</p>
+					<p>4.2.3.2 We may also share personal information with external organizations or individuals if we believe that access, use, preservation or disclosure of the information is reasonably necessary to: (a) meet any Applicable law, regulation, legal process or enforceable governmental request; (b) detect, prevent or otherwise address fraud, security or technical issues; (c)protect against harm to the rights, property or safety of our customers or the public, as required or permitted by law.</p>
+					<h3>4.2.4 Retention:</h3>
+					<p>4.2.4.1 The information so collected shall be retained only for a limited duration necessary to fulfil the purposes outlined herein, unless a longer retention period is required or permitted by law and only for the purposes defined above. Once the purpose is achieved, all personal information is deleted in a safe and secure mode.</p>
+					<h3>5. Non-Personal Information:</h3>
+					<p>5.1 Non-personal information is defined as any data that does not personally identify you and may include unique system or hardware identifiers, system or App software, and peripherals.</p>
+					<p>5.2 Any non-personal information, when clubbed with personal information shall be treated as personal information</p>
+					<p>5.3 The following is the manner in which we collect, use, share and retain non-personal information.</p>
+
+					<h3>5.3.1 Collection:</h3>
+					<p>5.3.1.1 You agree that the Portal may collect diagnostic, technical, usage related information, for the usage purposes described below.</p>
+					<h3>5.3.2 Usage:</h3>
+					<p>5.3.2.1 The above-mentioned information is gathered periodically to provide and improve the Portal and services therein, facilitate the provision of Portal support and other services to you (if any) and to verify compliance with the terms of this Policy.</p>
+					<h3>5.3.3 Sharing:</h3>
+					<p>5.3.3.1 To enable the Portal partners to improve their software, hardware and services designed for use with the Portal, we may also provide any such partner with a subset of diagnostic information that is relevant to that partner’s software, hardware and/or services, as long as the diagnostic information is in a form that does not personally identify you.</p>
+					<h3>5.3.4 Retention:</h3>
+					<p>5.3.4.1 The information so collected shall be retained only for a limited duration necessary to fulfil the purposes outlined herein, unless a longer retention period is required or permitted by law and only for the purposes defined above. Once the purpose is achieved, all information is deleted in a safe and secure mode.</p>
+					<h3>6. Location Services:</h3>
+					<p>6.1 The Portal, its licensees and agents, may access, collect and analyse your usage of the Portal and other information related to your location on a regular basis through Bluetooth and Wi-Fi signals and other technologies and data for the performance of the services provided by the Portal and to help improve the design, functionality, performance, and content of the Portal. In order to collect geo-location information, the location settings must be enabled on your device. Therefore, in some cases, the Portal may request that you enable the location settings.</p>
+					<p>6.2 Except in cases where any specific services requested by you require or involve personal identification, the Portal collects location data anonymously and in a form that does not personally identify you. By using the Portal, you agree and consent to the transmission, collection, maintenance, processing and use of your location data to provide and improve such services of the Portal.</p>
+					<h3>7. Cookies:</h3>
+					<p>7.1 Information collected by cookies and other technologies is treated as non-personal information. However, to the extent that IP addresses or similar identifiers are considered personal information by local law, we treat any information linked to such identifiers as personal information. Similarly, to the extent that non-personal information is combined with personal information, we will treat the combined information as personal information.</p>
+					<h3>8 Other Information the Portal collects:</h3>
+					<p>8.1 The Portal also may collect other information about you in ways that the Portal describe to you or otherwise with your consent. You can choose not to provide us with certain types of information, but doing so may affect your ability to avail and/or use some services.</p>
+					<h3>9Third Party Portals, Websites & Services:</h3>
+					<p>9.1 The Portal may include links to other websites/Apps and other content that links to third party websites. Such websites/Apps are governed by their respective privacy policies, which are out of the App’s control. Use of any information you provide while using a third-party website or App through the App, is governed by the privacy policy of the operator of the website / App / operator you are using/ visiting. That policy may differ from that of the App. If you can't find the privacy policy of any of such websites /App via a link from its website's homepage, you should contact the relevant website /App operator directly for more information.</p>
+					<h3>10Access, Correction and Deletion:</h3>
+					<p>10.1 The Portal strives hard to keep its records updated and accurate with your latest information. You shall be responsible to ensure that the information or data you provide from time to time is and shall be correct, current and updated and you have all the rights, permissions and consents to provide such information or data.</p>
+					<p>10.2 You may note that deletion of certain information that is crucial for performance of services s retention is required by the Applicable law or law enforcement requests or under any judicial proceedings or it is extremely difficult to implement (such as requests related to backup copies or if a new system is required to process the request or change of technical design) or risks the privacy of other users.</p>
+					<h3>11Queries and Complaints:</h3>
+					<p>11.1 We are committed to protect your personal information collected and processed by us and look forward to your continued support for the same. In case of any feedback or concern regarding protection of your personal information, or any privacy-related feedback or concerns you may contact:
+						<p>Mr. Brijesh Shah</p>
+						<p>Jio.JPMSSupport@ril.com</p>
+					</p>
+
+				</div>
+			</div>
+		</div>
+      </div>
+    </div>
+  </div>
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  const boxes = document.querySelectorAll('.logo-box');
+  const companyInput = document.getElementById('company-input'); // optional hidden input
+
+  // ---- 1) Restore highlight ONCE after navigation ----
+  const saved = sessionStorage.getItem('selectedCompany');
+  const showOnce = sessionStorage.getItem('selectedCompany_show_once') === '1';
+
+  if (saved && showOnce) {
+    const el = document.querySelector(`.logo-box[data-company="${saved}"]`);
+    if (el) el.classList.add('is-selected');
+    if (companyInput) companyInput.value = saved;
+  }
+  // Clear the one-time flag so a refresh won’t highlight again
+  sessionStorage.removeItem('selectedCompany_show_once');
+
+  // ---- 2) Handle click: highlight, store once, then navigate via JS ----
+  boxes.forEach(box => {
+    box.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');   // only react to the logo button/image
+      if (!btn) return;
+
+      e.preventDefault();                       // stop the form submit
+
+      const company = box.dataset.company || '';
+      // Save selection for the *next* page load only
+      sessionStorage.setItem('selectedCompany', company);
+      sessionStorage.setItem('selectedCompany_show_once', '1');
+
+      // Immediate visual feedback
+      boxes.forEach(b => b.classList.remove('is-selected'));
+      box.classList.add('is-selected');
+      if (companyInput) companyInput.value = company;
+
+      // Build GET URL: /home?company=...&next_page=...
+      const HOME = {{ url_for('home') | tojson }};
+      const NEXT = {{ (next_page or "") | tojson }};
+      const url = new URL(HOME, window.location.origin);
+      if (company) url.searchParams.set('company', company);
+      if (NEXT)    url.searchParams.set('next_page', NEXT);
+
+      // Small delay so the scale effect is visible (optional)
+      setTimeout(() => window.location.assign(url.toString()), 60);
+    });
+  });
+});
+
+
+
+
+
+const passwordInput = document.getElementById("password-input");
+const togglePassword = document.getElementById("togglePassword");
+
+togglePassword.addEventListener("click", () => {
+    const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+    passwordInput.setAttribute("type", type);
+
+    // Toggle icon (eye / eye-slash)
+    togglePassword.classList.toggle("fa-eye");
+    togglePassword.classList.toggle("fa-eye-slash");
+});
+
+
+function submitQuery(event) {
+    // Prevent default form submission
+    event.preventDefault();
+
+    // Get values from form fields
+    const email = document.getElementById('email').value;
+    const username = document.getElementById('username').value;
+    const query = document.getElementById('query').value;
+
+     // Validate the email domain (only allow @ril.com and @jio.com)
+	const validEmailDomains = ['@ril.com', '@jio.com'];
+
+    let isEmailValid = validEmailDomains.some(domain => email.endsWith(domain));
+    
+    if (!isEmailValid) {
+        alert('Please enter a valid email address with domain @ril.com or @jio.com.');
+        return; // Stop form submission if email is invalid
+    }
+
+
+    // Validate fields
+    if (!email || !username || !query) {
+        alert('All fields are required!');
+        return;
+    }
+
+    // Prepare data
+    const data = { email: email, username: username, query: query };
+
+    // Send data to server
+    fetch('/submit_query', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data) // Convert JS object to JSON
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+			alert('✅Query submitted successfully!');
+			closeContactModal();
+		} else {
+			alert('Failed to submit query: ' + (data.message || 'Unknown error'));
+		}
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error submitting your query.');
+    });
+}
+
+// Function to close the contact modal
+function closeContactModal() {
+    document.getElementById('contactModal').style.display = 'none';
+}
+
+// Function to open the contact modal (you might have this already)
+function openContactModal() {
+    document.getElementById('contactModal').style.display = 'block';
+}
+
+
+function openprivacyModal() {
+  document.getElementById("privacyModal").style.display = "block";
+}
+
+function closeprivacyModal() {
+  document.getElementById("privacyModal").style.display = "none";
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  let modal = document.getElementById("privacyModal");
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+{% if next_page %}
+	const params = new URLSearchParams(window.location.search);
+	params.set("next", "{{ next_page }}");
+	const newUrl = window.location.pathname + "?" + params.toString();
+	window.history.replaceState({}, "", newUrl);
+{% endif %}
+
+</script>
+</body>
+</html>
+

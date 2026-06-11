@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="icon" href="{{ url_for('static', filename='images/Jio_logo.png') }}" sizes="32x32" type="image/png">
+	<title>Automation Module</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+	<style>
+		.main5-container {
+			overflow: auto;
+			margin-right: 0px;
+			max-height: 100%;
+		}
+
+		.main5-container::-webkit-scrollbar {
+			display: none;
+			/* Chrome, Safari, Opera */
+		}
+
+		.box-container {
+			display: flex;
+			gap: 50px;
+			/* Adjust spacing here */
+			margin-left: 110px;
+			margin-top: 90px;
+			flex-wrap: wrap;
+		}
+
+		.box {
+			height: 170px;
+			width: 185px;
+			margin-bottom: 2%;
+			border-radius: 18px;
+			transform: scale(1.1);
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+			padding: 10px;
+			transition: 0.3s ease;
+			cursor: pointer;
+			position: relative;
+			overflow: hidden;
+			margin-top: -18px;
+			margin-left: -15px;
+			border-radius: 5px;
+			background-color: white;
+
+		}
+
+		.box::after {
+			content: '';
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 25px;
+			/* This creates the partition at the bottom */
+			background: #eef2f7;
+			/* Color of the cut section, matching your background */
+			border-top-left-radius: 10px;
+			border-top-right-radius: 10px;
+		}
+
+
+
+
+
+		.box-title {
+			position: absolute;
+			bottom: 160px;
+			/* Move text to bottom inside box */
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 12px;
+			font-weight: bold;
+			color: grey;
+			display: inline-block;
+		}
+
+		.box-title1 {
+			position: absolute;
+			bottom: 160px;
+			/* Move text to bottom inside box */
+			left: 30%;
+			transform: translateX(-20%);
+			font-size: 11.5px;
+			font-weight: bold;
+			color: grey;
+			display: inline-block;
+
+		}
+
+		.productLabel {
+			position: absolute;
+			bottom: 0;
+			/* Position label at the bottom, directly on the partition */
+			left: 8%;
+			top: 90%;
+			transform: translateX(-50%);
+			/* Centering the label horizontally */
+			color: grey;
+			font-weight: bold;
+			font-size: 9px;
+			/* Adjust the font size if necessary */
+			z-index: 1;
+			/* Ensures the label is above the partition */
+		}
+
+
+		.box-icon {
+			width: 440px;
+			height: 145px;
+			margin-left: -140px;
+			margin-top: -5x;
+		}
+
+		.box-icon1 {
+			width: 450px;
+			height: 180px;
+			margin-left: -140px;
+			margin-top: -9px;
+		}
+
+
+		/* Hover effect */
+		.box:hover {
+			transform: scale(1.05);
+			box-shadow: 0 8 20px rgba(0, 0, 0, 0.18);
+		}
+
+		.arrow-circle {
+			position: absolute;
+			bottom: -4px;
+			/* Position the circle on the partition */
+			margin-left: 150px;
+			border-radius: 50%;
+			width: 27px;
+			height: 32px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 2;
+			/* Ensure the circle is above the partition */
+		}
+
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+
+		.modal-content {
+			background: white;
+			padding: 20px;
+			width: 300px;
+			border-radius: 8px;
+			margin: 10% auto;
+			text-align: center;
+			position: relative;
+		}
+
+		.close-btn {
+			position: absolute;
+			right: 10px;
+			top: 5px;
+			cursor: pointer;
+			font-size: 20px;
+		}
+	</style>
+
+
+
+
+	<!-- Model Viewer Library -->
+	<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+	<!-- Lottie Player Library -->
+	<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+
+<body>
+
+
+
+	<div class="menu-container">
+		<a href="/ims_menu" class="home-icon"><i class="fas fa-home"></i></a>
+		<h2>JPMS Automation Module</h2>
+		<div class="user-status">
+			{% if user_logged_in %}
+			<span class="welcome-text">{{ name }}</span>
+			<button class="logout-btn" style="background-color: #32CD32; border-radius: 50%; height: 33px; width: 33px;"
+				title="Logout" onclick="location.href='/logout'">
+				<i class="fa-solid fa-power-off"></i>
+			</button>
+			{% else %}
+			<button onclick="location.href='/'">Login</button>
+			{% endif %}
+		</div>
+	</div>
+
+
+	<div class="main5-container">
+		<div class="navigation_bar">
+			<button title="Guideline Documents" data-page="/usefull_links" onclick="location.href='/usefull_links'"
+				style="margin-top: 65%;"><i class="fas fa-file-alt"></i></button>
+			<button title="RF Planning Data" data-page="/planning-DB" onclick="location.href='/planning-DB'"><i
+					class="fas fa-project-diagram"></i></button>
+			<button title="Auto ODD Creation" data-page="/create-ODD" onclick="location.href='/create-ODD'"><i
+					class="fas fa-cogs"></i></button>
+			<button title="Master Database" data-page="/update-MDB" onclick="location.href='/update-MDB'"><i
+					class="fas fa-database"></i></button>
+			<button title="Project Roll-Out Tracker" data-page="/project_tracker"
+				onclick="location.href='/project_tracker'"><i class="fas fa-chart-line"></i></button>
+			<button title="Inventory & Stock Management" data-page="/update-inventory"
+				onclick="location.href='/update-inventory'"><i class="fas fa-warehouse"></i></button>
+			<button title="Incident Tracking System" data-page="/incident-tracking"
+				onclick="location.href='/incident-tracking'"><i class="fas fa-clipboard-list"></i></button>
+			<button title="Deployment Architecture" data-page="/calculate-BOQ"
+				onclick="location.href='/calculate-BOQ'"><i class="fas fa-sitemap"></i></button>
+			<button title="Jio Indigenous Product Information" data-page="/product-info"
+				onclick="location.href='/product-info'"><i class="fas fa-info-circle"></i></button>
+			<button title="Automation Module" data-page="/automation-module"
+				onclick="location.href='/automation-module'"><i class="fas fa-robot"></i></button>
+		</div>
+
+
+
+		<div class="box-container">
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(1, '/automation-module/sleeping-cell')">
+					<video class="box-icon1" autoplay loop muted playsinline>
+						<source src="{{ url_for('static', filename='ProductImage/Alert.webm') }}" type="video/mp4">
+					</video>
+					<span class="box-title">Sleeping Cell</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Maroti Thoke</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Sleeping Cell', 'Detects inactive or non-performing cells across the network in real time.Helps identify coverage gaps and service disruptions quickly.Enables faster troubleshooting and proactive maintenance.Improves overall network availability and user experience.Provides actionable insights for network optimization.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(2, '/automation-module/indigenous-nMaps')">
+					<video class="box-icon1" id="video-access2" autoplay loop muted playsinline
+						style="margin-top: -25px; height: 220px; width: 520px; margin-left: -170px;">
+						<source src="{{ url_for('static', filename='animations/Earth Globe Looped Icon.webm') }}"
+							type="video/mp4">
+					</video>
+					<span class="box-title">Indigenous Map</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Nitin Awasthi</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Indigenous Map', 'Offers an interactive, location-based visualization of network elements.Helps monitor cell performance geographically with real-time data.Enables quick identification of regional issues and hotspots.Supports better planning and decision-making for network expansion.Enhances operational efficiency with intuitive mapping tools.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(3, '/automation-module/auto-sscvt')">
+					<video class="box-icon1" autoplay loop muted playsinline>
+						<source src="{{ url_for('static', filename='ProductImage/Gears Lottie Animation.webm') }}"
+							type="video/mp4">
+					</video>
+					<span class="box-title">SSCVT</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Nitin Awasthi</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'SSCVT', 'Automates SSCVT processes to reduce manual effort and errors.Tracks performance metrics and validates network changes efficiently.Ensures consistency in operations through standardized workflows.Speeds up reporting and improves overall productivity.Provides clear insights into system performance trends..')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(3, '/automation-module/gnodeb-report')">
+					<video class="box-icon" autoplay loop muted playsinline>
+						<source src="{{ url_for('static', filename='ProductImage/Reports.webm') }}" type="video/mp4">
+					</video>
+					<span class="box-title1" style="margin-left: -10px; margin-top: -10px; margin-right: -20px;">5G
+						Macro gNB Weekly Report</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner:Prasad Hegde</div>
+					<div class="arrow-circle"
+						onclick="Generates comprehensive weekly reports for 5G macro gNB performance.Highlights key KPIs, trends, and network health indicators.Helps teams track progress and identify potential issues early.Supports data-driven decision-making and planning.Saves time with automated report generation and analysis.">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(5, '/automation-module/poor-cell')" Style="margin-top: -18px;">
+					<video class="box-icon1" autoplay loop muted playsinline style="margin-top: 30px; height: 100px;">
+						<source src="{{ url_for('static', filename='ProductImage/No Connection.webm') }}"
+							type="video/mp4">
+					</video>
+					<span class="box-title1">Poor Cell Analysis</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Maroti Thoke</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Poor Cell Analysis', 'Identifies cells with degraded or poor performance.Analyzes key metrics to determine root causes of issues.Helps prioritize optimization efforts effectively.Improves network quality and customer experience.Provides detailed insights for corrective actions.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(6, '/automation-module/wrong-tilt')" Style="margin-top: -75px;">
+					<video class="box-icon" autoplay loop muted playsinline style="margin-top: 30px;">
+						<source src="{{ url_for('static', filename='ProductImage/Configuration.webm') }}"
+							type="video/mp4">
+					</video>
+					<span class="box-title1">Wrong Tilt Configration</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Mohammad K </div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Detects incorrect antenna tilt configurations affecting coverage.Helps optimize signal distribution and reduce interference.Identifies misconfigurations quickly for faster correction.Improves network efficiency and coverage quality.Supports better RF planning and performance tuning.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="checkAccess(7, '/automation-module/kpi-automation')"
+					Style="margin-top: -75px;">
+					<video class="box-icon" id="video-access1" autoplay loop muted playsinline
+						style="margin-top: 10px; width: 450px;">
+						<source src="{{ url_for('static', filename='animations/data.webm') }}" type="video/mp4">
+					</video>
+
+					<span class="box-title1" style="width: 100%; font-size: 13px; margin-left: 40px;">KPI
+						Automation</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Mayank Taran </div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Automates collection and monitoring of key performance indicators.Provides real-time dashboards and performance insights.Reduces manual tracking and reporting efforts.Helps in quick detection of anomalies and trends.Improves decision-making with accurate and timely data.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+
+				</div>
+			</div>
+
+			<div class="box-item">
+				<div class="box" onclick="" Style="margin-top: -75px;">
+					<lottie-player class="box-icon" Style="margin-left: -125px;"
+						src="{{ url_for('static', filename='animations/Vishnu-Marketing Automation.json') }} "
+						background="transparent" speed="1" loop autoplay>
+					</lottie-player>
+
+					<span class="box-title1"
+						style="width: 100%; font-size: 13px; align-items: center; margin-left: 0px;">Fault Management
+						Extender</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Punit Bhagat</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Extends fault detection capabilities across network elements.Identifies, tracks, and categorizes faults efficiently.Reduces downtime with faster alerting and resolution.Improves network reliability and operational response time.Provides centralized fault monitoring and management.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+
+				</div>
+			</div>
+			<div class="box-item">
+				<div class="box" onclick="" Style="margin-top: -75px;">
+					<video class="box-icon" id="video-access1" autoplay loop muted playsinline
+						style="margin-top: 10px; width: 450px;">
+						<source src="{{ url_for('static', filename='animations/reporting.webm') }}" type="video/mp4">
+					</video>
+
+					<span class="box-title1"
+						style="width: 100%; font-size: 13px; align-items: center; margin-left: 15px;">Acceptance
+						Testing</span>
+					<div class="productLabel" Style="margin-left: 60px;">Module Owner: Nitesh C.</div>
+					<div class="arrow-circle"
+						onclick="openModal(event, 'Acceptance Testing','Automates validation of network deployments and changes.Ensures configurations meet predefined quality standards.Reduces manual testing effort and human errors.Speeds up deployment cycles with reliable validation.Provides detailed reports for compliance and verification.')">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r="10" style="fill:#808080;" />
+							<polyline points="10 8 14 12 10 16" style="stroke:white;" />
+						</svg>
+					</div>
+
+				</div>
+			</div>
+
+
+
+
+			<div class="box-item" style="margin-bottom: 30px;">
+				<div class="box" onclick="displaymessage()" Style="margin-top: -75px;">
+					<video class="box-icon" autoplay loop muted playsinline style="margin-top: 20px;">
+						<source src="{{ url_for('static', filename='ProductImage/t5d42NEZJZ.webm') }}" type="video/mp4">
+					</video>
+
+					<span class="box-title1" style="width: 100%;font-size: 13px; margin-left: -15px;">Want to add your
+						Automation ?</span>
+
+
+				</div>
+			</div>
+
+
+		</div>
+
+		<div id="moduleModal" class="modal">
+			<div class="modal-content">
+				<span class="close-btn" onclick="closeModal()">&times;</span>
+				<h2 id="modalTitle"></h2>
+				<p id="modalDesc"></p>
+			</div>
+		</div>
+		<script>
+
+
+			function checkAccess(boxNumber, redirectUrl) {
+				fetch(`/check-access/${boxNumber}`)
+					.then(response => response.json())
+					.then(data => {
+						if (data.allowed) {
+							location.href = redirectUrl;    // Your original redirect
+						} else {
+							alert("You do not have permission to access this feature.");
+						}
+					})
+					.catch(error => console.error("Error:", error));
+			}
+
+
+			document.addEventListener("DOMContentLoaded", function () {
+				const currentPath = window.location.pathname;
+				const buttons = document.querySelectorAll(".navigation_bar button");
+
+				buttons.forEach(button => {
+					const page = button.getAttribute("data-page");
+					if (currentPath === page) {
+						button.classList.add("active");
+					}
+				});
+			});
+
+			function openModal(event, title, description) {
+				event.stopPropagation(); // Prevents triggering the parent box click
+				document.getElementById("modalTitle").innerText = title;
+				document.getElementById("modalDesc").innerText = description;
+				document.getElementById("moduleModal").style.display = "block";
+			}
+
+			function closeModal() {
+				document.getElementById("moduleModal").style.display = "none";
+			}
+
+			// Close modal when clicking outside content
+			window.onclick = function (event) {
+				const modal = document.getElementById("moduleModal");
+				if (event.target === modal) {
+					modal.style.display = "none";
+				}
+			}
+
+			document.addEventListener('DOMContentLoaded', () => {
+				document.getElementById('video-access1').playbackRate = 0.5;      // 1.5x speed
+				document.getElementById('video-access2').playbackRate = 0.5;      // 1.5x speed
+
+			});
+
+
+		</script>
+
+</body>
+
+</html>

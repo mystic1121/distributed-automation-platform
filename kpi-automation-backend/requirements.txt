@@ -1,0 +1,20 @@
+# Web framework + WSGI server
+Flask==3.0.3
+Werkzeug==3.0.3
+gunicorn==22.0.0
+
+# Database (AWS RDS MySQL)
+PyMySQL==1.1.1
+
+# AWS SDK (S3 + Secrets Manager)
+boto3==1.34.131
+
+# Data processing
+pandas==2.2.2
+openpyxl==3.1.5
+
+# HTTP client (JCP job triggers)
+requests==2.32.3
+
+# Password hashing (Argon2id)
+argon2-cffi==23.1.0

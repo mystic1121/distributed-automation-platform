@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.key
+*.enc
+cache_handler/
+folder_connect/
+local/
+.env
+.env.*
+db_connect/schema_map.json
