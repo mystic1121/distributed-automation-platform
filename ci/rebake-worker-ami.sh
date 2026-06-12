@@ -31,17 +31,36 @@ until [ "$(aws ssm describe-instance-information --region $REGION \
 done
 
 # 3) pull the new code onto the builder + refresh deps
+#      
+#   - print the resolved short SHA as the LAST line of stdout so the
+#     Jenkins side can assert it matches $TAG before baking.
 CMD=$(aws ssm send-command --region $REGION --instance-ids "$IID" \
   --document-name AWS-RunShellScript \
   --parameters 'commands=[
-    "cd /opt/kpi && git fetch --all && git reset --hard origin/main",
+    "set -euo pipefail",
+    "git config --system --add safe.directory /opt/kpi",
+    "cd /opt/kpi",
+    "sudo -u ec2-user git fetch --all --prune",
+    "sudo -u ec2-user git reset --hard origin/main",
     "cd /opt/kpi/kpi-automation-worker/prepost && pip3.11 install -q -r requirements-automation.txt",
-    "sudo systemctl restart kpi-automation"]' \
+    "cd /opt/kpi && echo BAKED_SHA=$(sudo -u ec2-user git rev-parse --short HEAD)"]' \
   --query 'Command.CommandId' --output text)
 aws ssm wait command-executed --region $REGION --command-id "$CMD" --instance-id "$IID" || true
 STATUS=$(aws ssm get-command-invocation --region $REGION --command-id "$CMD" --instance-id "$IID" --query Status --output text)
+OUT=$(aws ssm get-command-invocation --region $REGION --command-id "$CMD" --instance-id "$IID" --query StandardOutputContent --output text)
+ERR=$(aws ssm get-command-invocation --region $REGION --command-id "$CMD" --instance-id "$IID" --query StandardErrorContent --output text)
 echo "Provision status: $STATUS"
-[ "$STATUS" = "Success" ] || { echo "Provisioning failed"; exit 1; }
+echo "----- builder stdout -----"; echo "$OUT"
+[ "$STATUS" = "Success" ] || { echo "Provisioning failed"; echo "----- builder stderr -----"; echo "$ERR"; exit 1; }
+
+# 3b) HARD GATE: the code baked into the AMI must match the commit we are deploying.
+
+BAKED_SHA=$(echo "$OUT" | sed -n 's/^BAKED_SHA=//p' | tail -n1)
+echo "Baked SHA on builder: '$BAKED_SHA'  (expected: '$TAG')"
+if [ "$BAKED_SHA" != "$TAG" ]; then
+  echo "ABORT: builder HEAD ($BAKED_SHA) does not match deploy tag ($TAG). The git update did not take — refusing to bake a stale AMI."
+  exit 1
+fi
 
 # 4) bake the new AMI
 AMI=$(aws ec2 create-image --region $REGION --instance-id "$IID" \

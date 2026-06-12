@@ -11,6 +11,7 @@ pipeline {
       steps {
         checkout scm
         script { env.TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim() }
+        echo "Deploying commit ${env.TAG}"
       }
     }
 
@@ -42,7 +43,7 @@ pipeline {
     }
   }
   post {
-    success { echo "Deployed ${env.TAG}: backend image in ECR, worker AMI rebaked, both ASGs refreshing." }
-    failure { echo "Deploy failed — check which stage; fleets only change after their stage succeeds." }
+    success { echo "Deployed ${env.TAG}: backend image in ECR, worker AMI rebaked (verified == ${env.TAG}), both ASGs refreshing." }
+    failure { echo "Deploy failed — check which stage; fleets only change after their stage succeeds. A worker-stage failure usually means the builder's HEAD did not match ${env.TAG} (git update didn't take)." }
   }
 }
