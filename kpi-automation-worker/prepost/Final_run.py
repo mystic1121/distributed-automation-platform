@@ -34,7 +34,7 @@ def read_file(filepath : str, date_format : str = "%d/%m/%Y %H:%M", fillna : flo
     data = pd.read_csv(filepath)
 
     # format date, time and `float` values
-    data["datetime"] = data[["Date", "Time"]].apply(lambda x : f"{x[0]} {x[1]}", axis = 1)
+    data["datetime"] = data[["Date", "Time"]].apply(lambda x : f"{x['Date']} {x['Time']}", axis = 1)
     data["datetime"] = pd.to_datetime(data["datetime"], format = date_format)
     data = data.drop(columns = ["Date", "Time"]).set_index(["datetime"]).reset_index()
 

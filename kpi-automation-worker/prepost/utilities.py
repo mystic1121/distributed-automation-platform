@@ -304,7 +304,7 @@ def read_file(filepath: str, date_format: str = "%d/%m/%Y %H:%M",
             print(f"Warning: cp1252 also failed. Trying latin-1...")
             data = pd.read_csv(filepath, encoding='latin-1', sep=None, engine='python')
 
-    data["datetime"] = data[["Date", "Time"]].apply(lambda x: f"{x[0]} {x[1]}", axis=1)
+    data["datetime"] = data[["Date", "Time"]].apply(lambda x: f"{x['Date']} {x['Time']}", axis=1)
     data["datetime"] = pd.to_datetime(data["datetime"], format=date_format)
     data = data.drop(columns=["Date", "Time"]).set_index(["datetime"]).reset_index()
 
