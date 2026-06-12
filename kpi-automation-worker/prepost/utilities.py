@@ -344,7 +344,10 @@ def write_excel(
         wb = load_workbook(template_filepath)
 
         # ── about sheet ───────────────────────────────────────────────────
-        with open(os.path.join(ROOT, "template", PROJECT_CODE, "meta.yaml")) as f:
+        # template (see rcp_prepost_runner.py). Read it from there rather than the
+        # old local repo layout (ROOT/template/PROJECT_CODE) which doesn't exist on EC2.
+        meta_yaml_path = os.path.join(os.path.dirname(os.path.abspath(template_filepath)), "meta.yaml")
+        with open(meta_yaml_path) as f:
             meta = yaml.load(f, Loader=yaml.FullLoader)
 
         about_ws = wb["about"]

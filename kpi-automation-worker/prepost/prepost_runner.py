@@ -98,6 +98,13 @@ def run_prepost_job(job_id: str) -> tuple[bool, str]:
     # keep a copy under inputs/<job_id>/template/ in S3 (for reference/job audit)
     upload_file_s3(job_template_path, f"{INPUT_PREFIX}/{job_id}/template/{os.path.basename(template_key)}")
 
+    meta_yaml_key = f"{TEMPLATE_PREFIX}/meta.yaml"
+    if s3_key_exists(meta_yaml_key):
+        download_file_s3(meta_yaml_key, os.path.join(job_template_dir, "meta.yaml"))
+    else:
+        _notify_ims_status(job_id, "Failed", error_message=f"meta.yaml not found in S3 at {meta_yaml_key}")
+        return False, f"meta.yaml not found in S3 at {meta_yaml_key}"
+
     # 3) CSV from S3 -> local
     csv_path = os.path.join(job_input_dir, "kpi_input.csv")
     csv_key  = f"{INPUT_PREFIX}/{job_id}/kpi_input.csv"
