@@ -31,17 +31,37 @@ until [ "$(aws ssm describe-instance-information --region $REGION \
 done
 
 # 3) pull the new code onto the builder + refresh deps
-#      
-#   - print the resolved short SHA as the LAST line of stdout so the
-#     Jenkins side can assert it matches $TAG before baking.
+#    NOTE: /opt/kpi is owned by ec2-user, but SSM runs commands as root.
+#    Without the fixes below, `git` aborts with "detected dubious ownership",
+#    the && chain stops, and (with no `set -e` in the remote script) the
+#    invocation still reports Success — baking a STALE AMI. So we:
+#      - put `set -e` first so any failure fails the whole invocation,
+#      - register /opt/kpi as a safe directory for root,
+#      - run git AS ec2-user (the repo owner),
+#      - print the resolved short SHA as the LAST line of stdout so the
+#        Jenkins side can assert it matches $TAG before baking.
+#    We FRESH-CLONE the repo every bake instead of `git fetch && git reset`.
+#    Rationale: if the base AMI carries a structurally corrupt .git (0-byte
+#    index, broken refs/objects from a prior bad bake), `git reset --hard`
+#    does NOT heal it — it aborts on read ("index file smaller than expected").
+#    A clean `rm -rf` + `git clone` is the only reliable repair and fully
+#    decouples the new image from the base AMI's repo state, so corruption
+#    cannot self-perpetuate through the /kpi/automation/ami-id chain.
+#    We also assert integrity (fsck) and that key files are non-empty on the
+#    builder BEFORE baking, so a bad working tree can never reach create-image.
 CMD=$(aws ssm send-command --region $REGION --instance-ids "$IID" \
   --document-name AWS-RunShellScript \
   --parameters 'commands=[
     "set -euo pipefail",
+    "REPO=https://github.com/mystic1153/aws-kpi-automation-platform.git",
+    "sudo rm -rf /opt/kpi",
+    "sudo git clone $REPO /opt/kpi",
+    "sudo chown -R ec2-user:ec2-user /opt/kpi",
     "git config --system --add safe.directory /opt/kpi",
-    "cd /opt/kpi",
-    "sudo -u ec2-user git fetch --all --prune",
-    "sudo -u ec2-user git reset --hard origin/main",
+    "cd /opt/kpi && sudo -u ec2-user git reset --hard origin/main",
+    "sudo -u ec2-user git -C /opt/kpi fsck --connectivity-only",
+    "test -s /opt/kpi/kpi-automation-worker/prepost/rcp_prepost_runner.py",
+    "test -s /opt/kpi/kpi-automation-worker/prepost/utilities.py",
     "cd /opt/kpi/kpi-automation-worker/prepost && pip3.11 install -q -r requirements-automation.txt",
     "cd /opt/kpi && echo BAKED_SHA=$(sudo -u ec2-user git rev-parse --short HEAD)"]' \
   --query 'Command.CommandId' --output text)
@@ -54,7 +74,9 @@ echo "----- builder stdout -----"; echo "$OUT"
 [ "$STATUS" = "Success" ] || { echo "Provisioning failed"; echo "----- builder stderr -----"; echo "$ERR"; exit 1; }
 
 # 3b) HARD GATE: the code baked into the AMI must match the commit we are deploying.
-
+#     This is what makes a silent stale-bake impossible. If git didn't actually
+#     update (dubious ownership, network, detached state, etc.), BAKED_SHA won't
+#     equal $TAG and we abort before creating the image.
 BAKED_SHA=$(echo "$OUT" | sed -n 's/^BAKED_SHA=//p' | tail -n1)
 echo "Baked SHA on builder: '$BAKED_SHA'  (expected: '$TAG')"
 if [ "$BAKED_SHA" != "$TAG" ]; then
@@ -62,7 +84,22 @@ if [ "$BAKED_SHA" != "$TAG" ]; then
   exit 1
 fi
 
-# 4) bake the new AMI
+# 3c) Flush the filesystem and STOP the builder before snapshotting.
+#     git reset just rewrote files (rcp_prepost_runner.py, .git/index, ...).
+#     `create-image --no-reboot` on a RUNNING instance snapshots the volume
+#     WITHOUT quiescing the FS, so those just-written files can be captured as
+#     0 bytes (AWS: "file system integrity is not guaranteed" with --no-reboot).
+#     A clean stop unmounts/flushes the FS, guaranteeing a consistent image, and
+#     a stopped builder can't accidentally start consuming SQS jobs.
+aws ssm send-command --region $REGION --instance-ids "$IID" \
+  --document-name AWS-RunShellScript \
+  --parameters 'commands=["sync","sleep 3","sync"]' \
+  --query 'Command.CommandId' --output text >/dev/null || true
+aws ec2 stop-instances --region $REGION --instance-ids "$IID" >/dev/null
+aws ec2 wait instance-stopped --region $REGION --instance-ids "$IID"
+
+# 4) bake the new AMI (instance is now stopped → snapshot is consistent;
+#    --no-reboot is harmless here since it's already stopped)
 AMI=$(aws ec2 create-image --region $REGION --instance-id "$IID" \
   --name "kpi-automation-ami-$TAG" --no-reboot --query ImageId --output text)
 echo "New AMI: $AMI"

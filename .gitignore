@@ -1,1 +1,4 @@
 89-Storage Server
+
+# Jenkins worker-rebake cross-stage scratch
+.rebake-state/
