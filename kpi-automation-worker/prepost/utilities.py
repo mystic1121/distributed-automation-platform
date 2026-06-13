@@ -351,9 +351,22 @@ def write_excel(
             meta = yaml.load(f, Loader=yaml.FullLoader)
 
         about_ws = wb["about"]
+        prepost_dir = os.path.dirname(os.path.abspath(__file__))
         for cell, value in meta["about"].items():
             if cell == "J7":
-                value = eval(value)
+                # J7 is a Python expression (e.g. open("VERSION").read()) that uses
+                # paths relative to the prepost dir. Evaluate it from there so the
+                # subprocess cwd doesn't matter, and never let it abort the report.
+                try:
+                    _cwd = os.getcwd()
+                    os.chdir(prepost_dir)
+                    try:
+                        value = eval(value)
+                    finally:
+                        os.chdir(_cwd)
+                except Exception as e:
+                    print(f"--- [WARN] about-J7 eval failed ({e}); using fallback ---")
+                    value = ""
             about_ws[cell] = value
         about_ws["L12"] = f"Report Date: {REPORT_DATE}\nReport Type: {REPORT_TYPE}"
 

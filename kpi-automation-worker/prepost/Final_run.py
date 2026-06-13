@@ -152,7 +152,7 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
         aggregated_remarks, aggregated_frame = get_aggregated(data_zero_filling, datetime_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
         _, aggregated_frame_daily_ignore_hour_always = get_aggregated(data_datepart, datepart_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
 
-        write_excel(
+        if not write_excel(
             template, ROOT, PROJECT_CODE, datetime_reference,
             LOCATION_NAME = "PAN India", reports = [summary, nodewise, errors.drop_duplicates().set_index("category")],
             REPORT_DATE = REPORT_DATE, REPORT_TYPE = REPORT_TYPE,
@@ -162,7 +162,8 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
             aggregated_sheet_frame = aggregated_frame,
             aggregated_daily_sheet_frame = aggregated_frame_daily_ignore_hour_always,
             post_process = post_process,
-        )
+        ):
+            return False, "write_excel failed for PAN India report (see logs above)."
 
         # 2. report for all mentioned vvip sites
         VVIP_SITES = data[data.Cell.isin(VVIP_SITES_LIST.CELL_ID.values)]
@@ -175,7 +176,7 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
         aggregated_remarks, aggregated_frame = get_aggregated(VVIP_SITES_ZF, datetime_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
         _, aggregated_frame_daily_ignore_hour_always = get_aggregated(VVIP_SITES_DP, datepart_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
 
-        write_excel(
+        if not write_excel(
             template, ROOT, PROJECT_CODE, datetime_reference,
             LOCATION_NAME = "VVIP Sites", reports = [summary, nodewise, errors.drop_duplicates().set_index("category")],
             REPORT_DATE = REPORT_DATE, REPORT_TYPE = REPORT_TYPE,
@@ -183,10 +184,11 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
             # ..version added: add aggretaed results
             aggregated_sheet_remarks = aggregated_remarks,
             aggregated_sheet_frame = aggregated_frame,
-            
+
             aggregated_daily_sheet_frame = aggregated_frame_daily_ignore_hour_always,
             post_process = post_process,
-        )
+        ):
+            return False, "write_excel failed for VVIP Sites report (see logs above)."
 
         # 3. report based on each filtered location
         for location in VVIP_SITES_LIST.LOCATION.unique():
@@ -204,7 +206,7 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
             aggregated_remarks, aggregated_frame = get_aggregated(loc_sites_zf, datetime_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
             _, aggregated_frame_daily_ignore_hour_always = get_aggregated(loc_sites_dp, datepart_reference, AGGREGATED_KPI_INFORMATION[["NOM", "DENOM", "isPercent"]])
 
-            write_excel(
+            if not write_excel(
                 template, ROOT, PROJECT_CODE, datetime_reference,
                 LOCATION_NAME = location.upper(), reports = [summary, nodewise, errors.drop_duplicates().set_index("category")],
                 REPORT_DATE = REPORT_DATE, REPORT_TYPE = REPORT_TYPE,
@@ -214,7 +216,8 @@ def run_final_jcp(input_csv, template_id, report_type, jcp_format_option, report
                 aggregated_sheet_frame = aggregated_frame,
                 aggregated_daily_sheet_frame = aggregated_frame_daily_ignore_hour_always,
                 post_process = post_process,
-            )
+            ):
+                return False, f"write_excel failed for location {location.upper()} (see logs above)."
 
         return True, "Code Executed Successfully."
     except Exception as e:

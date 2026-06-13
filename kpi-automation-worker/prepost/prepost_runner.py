@@ -178,7 +178,14 @@ def run_prepost_job(job_id: str) -> tuple[bool, str]:
         
         ok = (process.returncode == 0)
         
-        if ok:
+        # A zero exit code is not enough: if the report logic silently produced no
+        # files, treat the job as failed rather than shipping an empty zip.
+        produced_files = os.listdir(job_output_dir) if os.path.isdir(job_output_dir) else []
+        if ok and not produced_files:
+            ok = False
+            message = "Job exited 0 but produced no output files (empty output dir). Check logs for errors."
+            print(f"--- [DEBUG] PROCESS {process.pid} reported success but output dir is empty ---")
+        elif ok:
             message = "Success"
         else:
             # If the process crashed, we dynamically rip off the final stack trace logs for perfect clarity
