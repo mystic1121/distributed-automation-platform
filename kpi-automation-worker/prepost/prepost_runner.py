@@ -139,7 +139,7 @@ def run_prepost_job(job_id: str) -> tuple[bool, str]:
         # 2️⃣ Execute main report logic via Subprocess (True Parallelism)
         # -------------------------------------------------
 
-        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Final_jcp_run.py")
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Final_run.py")
         
         cmd = [
             sys.executable, "-u", script_path,

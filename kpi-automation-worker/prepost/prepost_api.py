@@ -14,7 +14,7 @@ import time
 
 import boto3
 
-from rcp_prepost_runner import run_prepost_job
+from prepost_runner import run_prepost_job
 
 # ── Config 
 SQS_QUEUE_URL      = os.environ["SQS_QUEUE_URL"]

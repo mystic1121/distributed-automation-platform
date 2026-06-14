@@ -60,7 +60,7 @@ CMD=$(aws ssm send-command --region $REGION --instance-ids "$IID" \
     "git config --system --add safe.directory /opt/kpi",
     "cd /opt/kpi && sudo -u ec2-user git reset --hard origin/main",
     "sudo -u ec2-user git -C /opt/kpi fsck --connectivity-only",
-    "test -s /opt/kpi/kpi-automation-worker/prepost/rcp_prepost_runner.py",
+    "test -s /opt/kpi/kpi-automation-worker/prepost/prepost_runner.py",
     "test -s /opt/kpi/kpi-automation-worker/prepost/utilities.py",
     "cd /opt/kpi/kpi-automation-worker/prepost && pip3.11 install -q -r requirements-automation.txt",
     "cd /opt/kpi && echo BAKED_SHA=$(sudo -u ec2-user git rev-parse --short HEAD)"]' \
@@ -85,7 +85,7 @@ if [ "$BAKED_SHA" != "$TAG" ]; then
 fi
 
 # 3c) Flush the filesystem and STOP the builder before snapshotting.
-#     git reset just rewrote files (rcp_prepost_runner.py, .git/index, ...).
+#     git reset just rewrote files (prepost_runner.py, .git/index, ...).
 #     `create-image --no-reboot` on a RUNNING instance snapshots the volume
 #     WITHOUT quiescing the FS, so those just-written files can be captured as
 #     0 bytes (AWS: "file system integrity is not guaranteed" with --no-reboot).

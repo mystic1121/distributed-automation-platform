@@ -26,7 +26,7 @@ CMD=$(aws ssm send-command --region $REGION --instance-ids "$IID" \
     "git config --system --add safe.directory /opt/kpi",
     "cd /opt/kpi && sudo -u ec2-user git reset --hard origin/main",
     "sudo -u ec2-user git -C /opt/kpi fsck --connectivity-only",
-    "test -s /opt/kpi/kpi-automation-worker/prepost/rcp_prepost_runner.py",
+    "test -s /opt/kpi/kpi-automation-worker/prepost/prepost_runner.py",
     "test -s /opt/kpi/kpi-automation-worker/prepost/utilities.py",
     "cd /opt/kpi/kpi-automation-worker/prepost && pip3.11 install -q -r requirements-automation.txt",
     "cd /opt/kpi && echo BAKED_SHA=$(sudo -u ec2-user git rev-parse --short HEAD)"]' \
