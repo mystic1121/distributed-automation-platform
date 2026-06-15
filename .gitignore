@@ -3,3 +3,5 @@
 # Jenkins worker-rebake cross-stage scratch
 .rebake-state/
 AWS-service-ss/
+README.md
+docs/
