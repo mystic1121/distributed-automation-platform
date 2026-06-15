@@ -19,7 +19,7 @@ CMD=$(aws ssm send-command --region $REGION --instance-ids "$IID" \
   --document-name AWS-RunShellScript \
   --parameters 'commands=[
     "set -euo pipefail",
-    "REPO=https://github.com/mystic1153/aws-kpi-automation-platform.git",
+    "REPO=https://github.com/mystic1153/distributed-automation-platform.git",
     "sudo rm -rf /opt/kpi",
     "sudo git clone $REPO /opt/kpi",
     "sudo chown -R ec2-user:ec2-user /opt/kpi",

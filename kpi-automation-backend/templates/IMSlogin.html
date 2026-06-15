@@ -270,26 +270,6 @@ textarea {
 		  </form>
 		</div>
 
-		<div class="logo-box {{ 'is-selected' if selected_company == 'hondutel' else '' }}" data-company="hondutel">
-		  <form method="GET" action="{{ url_for('home') }}">
-			<input type="hidden" name="company" value="hondutel">
-			<input type="hidden" name="next_page" value="{{ next_page }}">
-			<button type="submit" style="border:none;background:none;padding:0;">
-			  <img src="{{ url_for('static', filename='images/hondutel_logo.png') }}" alt="Hondutel">
-			</button>
-		  </form>
-		</div>
-
-		<div class="logo-box {{ 'is-selected' if selected_company == 'antel' else '' }}" data-company="antel">
-		  <form method="GET" action="{{ url_for('home') }}">
-			<input type="hidden" name="company" value="antel">
-			<input type="hidden" name="next_page" value="{{ next_page }}">
-			<button type="submit" style="border:none;background:none;padding:0;">
-			  <img src="{{ url_for('static', filename='images/antel_logo.png') }}" alt="Antel">
-			</button>
-		  </form>
-		</div>
-
       </div>
 		
 		<div class="welcome-text">Select your project to launch the JPMS Dashboard</div>
