@@ -41,6 +41,11 @@ What re-architecting the legacy module onto AWS actually changed.
 
 ![Architecture Diagram](docs/architecture.png)
 
+**Live application** — accessed through the public ALB DNS endpoint, demonstrating successful end-to-end routing from the internet to the backend fleet running in private subnets.
+
+![Live Application](docs/Website-Login-Page.png)
+
+![Live Application](docs/Website-Dashboard.png)
 
 
 ---
@@ -176,7 +181,9 @@ Internet user
 
 ```
 KPI-Automation-Tool/
+├── README.md                         
 ├── Jenkinsfile                       # CI/CD pipeline — staged backend + worker deploys
+│
 ├── ci/                               # one shell script per pipeline stage
 │   ├── backend/                      # build-image, push-image, update-image-tag, refresh-asg
 │   ├── worker/                       # launch-builder, provision, verify, bake,
@@ -184,14 +191,19 @@ KPI-Automation-Tool/
 │   ├── lib/                          # shared config (worker-config.sh)
 │   └── rebake-worker-ami.sh          # standalone end-to-end worker-rebake script
 │
+├── docs/                             # diagrams + deployment evidence
+│   ├── architecture.png              # architecture diagram
+│   ├── Jenkins-pipeline.png          # pipeline diagram
+│   ├── official_jenkins_pipeline.png # real Jenkins run (stage view)
+│   └── Screenshots/                  # AWS console captures used in §10
+│
 ├── kpi-automation-backend/           # Flask web app + API (the "backend" tier)
 │   ├── IMS_backend.py                # main Flask app: auth, KPI routes, S3/SQS/RDS calls
 │   ├── Dockerfile                    # Nginx → Gunicorn → Flask image (pushed to ECR)
 │   ├── requirements.txt
 │   ├── s3_helpers.py                 # S3 get/put helpers (replaces the old Z:\ drive)
 │   ├── db_connect/                   # MySQL handler (now reads creds from Secrets Manager)
-│   ├── templates/  static/           # web UI
-│   └── local/                        # AWS build + deployment guides (this project's docs)
+│   └── templates/  static/           # web UI
 │
 └── kpi-automation-worker/            # async job processor (the "worker" tier)
     └── prepost/
@@ -200,8 +212,6 @@ KPI-Automation-Tool/
         ├── Final_run.py              # Excel/data processing engine (openpyxl)
         ├── requirements-automation.txt
         └── VERSION
-
-
 ```
 
 ---
