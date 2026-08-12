@@ -1,0 +1,18 @@
+#!/bin/bash
+# Worker boot script. The AMI already has Python 3.11, the worker code,
+# its deps installed, and the kpi-automation systemd unit.
+
+set -euxo pipefail
+
+mkdir -p /etc/kpi
+cat > /etc/kpi/automation.env <<EOF
+S3_BUCKET=${s3_bucket}
+AWS_REGION=${region}
+SQS_QUEUE_URL=${sqs_url}
+BACKEND_URL=http://${alb_dns}
+MAX_CONCURRENT_JOBS=${max_concurrent_jobs}
+SQS_VISIBILITY_TIMEOUT=${sqs_visibility_timeout}
+EOF
+
+systemctl daemon-reload
+systemctl enable --now kpi-automation

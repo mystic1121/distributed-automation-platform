@@ -1,0 +1,34 @@
+#!/bin/bash
+# Backend boot script. The AMI already has Docker, Nginx + its config, and the
+# baked kpi-backend:latest image. This writes the env file (with values only
+# Terraform knows) and (re)launches the container behind Nginx.
+set -euxo pipefail
+
+mkdir -p /etc/kpi
+cat > /etc/kpi/backend.env <<EOF
+S3_BUCKET=${s3_bucket}
+AWS_REGION=${region}
+DB_SECRET_ID=${db_secret}
+APP_SECRET_ID=${app_secret}
+SQS_QUEUE_URL=${sqs_url}
+APP_PUBLIC_URL=http://${alb_dns}
+COMPANY=${company}
+EOF
+chmod 600 /etc/kpi/backend.env
+
+systemctl enable --now docker
+
+docker rm -f kpi-backend 2>/dev/null || true
+docker run -d \
+  --name kpi-backend \
+  --restart=always \
+  -p 127.0.0.1:5000:5000 \
+  --env-file /etc/kpi/backend.env \
+  --log-driver=awslogs \
+  --log-opt awslogs-region=${region} \
+  --log-opt awslogs-group=${gunicorn_log_group} \
+  --log-opt awslogs-create-group=true \
+  kpi-backend:latest
+
+systemctl enable --now nginx
+nginx -t && systemctl reload nginx
