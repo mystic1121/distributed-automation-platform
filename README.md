@@ -19,7 +19,7 @@ The interesting part of this project is **not** the application — it's the **d
 | **Region** | `ap-south-1` (Mumbai), across **2 Availability Zones** |
 | **Pattern** | Three-tier (web → app → data) + async worker tier decoupled via SQS |
 | **Compute** | Dockerized Flask backend + bare-Python worker fleet, both in Auto Scaling Groups |
-| **Deploy model** | Immutable artifacts — ECR image (backend) and baked AMI (worker), rolled out via Instance Refresh |
+| **Deploy model** | Declarative IaC (Terraform + Packer) + Immutable artifacts (ECR image & baked AMI) via Jenkins CI/CD |
 
 ### Impact at a Glance
 
@@ -30,7 +30,7 @@ What re-architecting the legacy module onto AWS actually changed.
 | **Availability** | Single automation server — a single point of failure | 2-AZ Auto Scaling fleet (min 2); survives instance **and** AZ loss |
 | **Deployment** | Manual, multi-step, per-server patching | One `git push` → fully automated; **rollback = 1 config change** |
 | **Job durability** | In-flight job lost if the server crashed | **Zero job loss** — SQS re-delivers; DLQ isolates repeat failures after 3 tries |
-| **Duplicate work** | N/A (one server) | **Exactly one** result per job, enforced by SQS visibility timeout (chaos-tested) |
+| **Duplicate work** | N/A (one server) | **At-least-once job processing**, enforced by SQS visibility timeout (chaos-tested) |
 | **Worker concurrency** | ~5 jobs on one box | Up to **ASG-max (4) × `MAX_CONCURRENT_JOBS` (5) ≈ 20** concurrent jobs, auto-scaled |
 | **Secrets** | Encrypted files + decrypt key on disk | **Zero stored credentials** — Secrets Manager fetched via IAM role at boot |
 
@@ -50,7 +50,102 @@ What re-architecting the legacy module onto AWS actually changed.
 
 ---
 
-## 3. CI/CD Deployment Workflow
+## 3. Infrastructure as Code (IaC) & Golden AMIs (Packer & Terraform)
+
+The entire AWS infrastructure and compute image baking are fully automated using **Packer** and **Terraform**, making the platform reproducible and significantly reducing configuration drift.
+
+### Provisioning & Deployment Architecture Diagram
+
+```text
++-----------------------------------------------------------------------------------+
+| PHASE 1: Golden AMI Baking (Packer)                                               |
+|                                                                                   |
+|  [ Local Machine ]                                                                |
+|        |                                                                          |
+|        +---> packer build backend.pkr.hcl  --> [ Backend Golden AMI  ]             |
+|        |                                       (Docker + Nginx + App Image)       |
+|        |                                                                          |
+|        +---> packer build worker.pkr.hcl   --> [ Worker Golden AMI   ]             |
+|                                                (Python 3.11 + systemd + deps)     |
++-------------------------------------------+---------------------------------------+
+                                            |
+                                            v (Pass AMI IDs to terraform.tfvars)
++-------------------------------------------+---------------------------------------+
+| PHASE 2: Declarative Infrastructure Provisioning (Terraform)                       |
+|                                                                                   |
+|  [ terraform apply ]                                                              |
+|        |                                                                          |
+|        v                                                                          |
+|   +---------------------------------------------------------------------------+   |
+|   | AWS Region: ap-south-1 (2 Availability Zones)                             |   |
+|   |                                                                           |   |
+|   |   +--------------------+     +----------------------------------------+   |   |
+|   |   | Public Subnets     |     | Private Subnets                        |   |   |
+|   |   |  - Public ALB      |     |  - Backend ASG (Backend Golden AMI)   |   |   |
+|   |   |  - NAT Gateways    | ==> |  - Worker ASG  (Worker Golden AMI)    |   |   |
+|   |   |  - Jenkins EC2     |     |  - Multi-AZ RDS MySQL                  |   |   |
+|   |   +--------------------+     +----------------------------------------+   |   |
+|   |                                                                           |   |
+|   |   +-------------------------------------------------------------------+   |   |
+|   |   | Supporting AWS Services & Security                                |   |   |
+|   |   |  - SQS Job Queue & DLQ     - AWS Secrets Manager (Auto Creds)      |   |   |
+|   |   |  - S3 Storage & VPC Endpt  - CloudWatch Alarms & SNS Email Alerts   |   |   |
+|   |   |  - Amazon ECR Registry   - SSM Parameter Store                    |   |   |
+|   |   +-------------------------------------------------------------------+   |   |
+|   +---------------------------------------------------------------------------+   |
++-------------------------------------------+---------------------------------------+
+                                            |
+                                            v (Infrastructure Ready)
++-------------------------------------------+---------------------------------------+
+| PHASE 3: Continuous Deployment Loop (Jenkins CI/CD)                               |
+|                                                                                   |
+|   [ Developer Git Push ] --> [ Jenkins Pipeline ]                                 |
+|                                   |                                               |
+|    +------------------------------+------------------------------+                |
+|    | (Backend Push)                                              | (Worker Push)  |
+|    v                                                             v                |
+|  Docker Push -> ECR                       SSM RunCommand -> Bake Worker AMI       |
+|  Update /kpi/backend/image-tag (SSM)      Update Launch Template version           |
+|  Backend ASG Instance Refresh             Worker ASG Instance Refresh             |
++-----------------------------------------------------------------------------------+
+```
+
+### Phase 1 — Golden AMI Baking (Packer)
+
+Located in [`packer/`](packer/), Packer builds two generic, pre-configured Amazon Linux 2023 "Golden AMIs" before infrastructure provisioning:
+
+* **Backend AMI** ([`packer/backend.pkr.hcl`](packer/backend.pkr.hcl)): Installs Docker, Nginx, compiles the local backend container image (`kpi-backend:latest`), and configures Nginx reverse-proxy rules forwarding port 80 to port 5000.
+* **Worker AMI** ([`packer/worker.pkr.hcl`](packer/worker.pkr.hcl)): Installs Python 3.11, worker libraries (`requirements-automation.txt`), and registers the `kpi-automation` systemd unit.
+
+### Phase 2 — Declarative Infrastructure Provisioning (Terraform)
+
+Located in [`terraform/`](terraform/), Terraform manages the entire AWS architecture declaratively:
+
+* **Networking & Security** ([`network.tf`](terraform/network.tf), [`security_groups.tf`](terraform/security_groups.tf)): VPC (`10.0.0.0/16`), 8 subnets across 2 AZs, Internet Gateway, 2× NAT Gateways, S3 Gateway Endpoint, and strict Security Group chaining.
+* **Storage, Database & Queues** ([`s3.tf`](terraform/s3.tf), [`rds.tf`](terraform/rds.tf), [`sqs.tf`](terraform/sqs.tf), [`secrets.tf`](terraform/secrets.tf)): S3 storage bucket, Multi-AZ MySQL RDS, SQS job queue + Dead-Letter Queue, and auto-generated Secrets Manager credentials.
+* **Compute & Load Balancing** ([`alb.tf`](terraform/alb.tf), [`backend_asg.tf`](terraform/backend_asg.tf), [`worker_asg.tf`](terraform/worker_asg.tf)): Public ALB, Backend ASG registered to Target Group, Worker ASG with SQS target-tracking autoscaling, and dynamic boot user-data scripts ([`user_data/`](terraform/user_data)).
+* **IAM & Observability** ([`iam.tf`](terraform/iam.tf), [`cloudwatch.tf`](terraform/cloudwatch.tf), [`ssm.tf`](terraform/ssm.tf)): Least-privilege IAM instance profiles, CloudWatch log groups, 8 CloudWatch alarms with SNS email alerts, ECR repository, and SSM parameters (`/kpi/backend/image-tag` and `/kpi/automation/ami-id`).
+
+### Quickstart — Bootstrapping the Environment
+
+```bash
+# 1. Bake the Golden AMIs
+cd packer
+packer init .
+packer build backend.pkr.hcl   # output: backend_ami_id
+packer build worker.pkr.hcl    # output: worker_ami_id
+
+# 2. Deploy Infrastructure
+cd ../terraform
+cp terraform.tfvars.example terraform.tfvars
+# Update terraform.tfvars with AMI IDs and alert_email
+terraform init
+terraform apply
+```
+
+After the infrastructure is provisioned, Jenkins handles subsequent application deployments and worker AMI rebuilds.
+
+## 4. CI/CD Deployment Workflow
 
 CI/CD is built around one principle: **never modify a running instance.** Each deploy produces an immutable, versioned artifact and *replaces* instances with it. This makes configuration drift structurally impossible — any instance the ASG launches later (scale-out, health replacement, AZ rebalance) comes up on the exact same artifact.
 
@@ -73,7 +168,7 @@ The pipeline ([`Jenkinsfile`](Jenkinsfile)) is split into **discrete, named stag
 
 ---
 
-## 4. Worker AMI Rebuild Pipeline Workflow
+## 5. Worker AMI Rebuild Pipeline Workflow
 
 The worker is **not** containerized (it's a long-running systemd service), so its deploy artifact is a **freshly baked AMI** rather than a container image. Jenkins automates the entire rebake — scripts in [`ci/worker/`](ci/worker/):
 
@@ -93,7 +188,7 @@ post/always: cleanup.sh     → terminate the temporary builder instance
 
 ---
 
-## 5. Key Features
+## 6. Key Features
 
 - **Highly available across 2 AZs** — every tier (ALB, backend, worker, RDS) spans `ap-south-1a` and `ap-south-1b`, with one NAT Gateway per AZ.
 - **Asynchronous, decoupled processing** — the backend enqueues jobs to **SQS** and returns immediately; a separate worker fleet long-polls and processes them.
@@ -106,7 +201,7 @@ post/always: cleanup.sh     → terminate the temporary builder instance
 
 ---
 
-## 6. AWS Services Used
+## 7. AWS Services & DevOps Tools Used
 
 | Service | Purpose in this project |
 |---|---|
@@ -125,10 +220,12 @@ post/always: cleanup.sh     → terminate the temporary builder instance
 | **Amazon CloudWatch** | Centralized logs (Nginx, Gunicorn, worker, RDS), metrics, and alarms. |
 | **Amazon SNS** | Email alerts fired by CloudWatch Alarms. |
 | **Jenkins** (on EC2) | CI/CD orchestrator — builds, versions, and rolls out both tiers on every push to `main`. |
+| **Terraform (≥ 1.5)** | Declarative Infrastructure as Code (IaC) provisioning VPC, ALB, ASGs, RDS, SQS, IAM, and Secrets. |
+| **Packer (≥ 1.3)** | Automated Golden AMI builder creating reproducible, drift-free base images for compute fleets. |
 
 ---
 
-## 7. System Architecture Explanation
+## 8. System Architecture Explanation
 
 The platform is a **three-tier design with an added asynchronous worker tier**, all inside a single VPC (`10.0.0.0/16`) spanning two AZs.
 
@@ -154,7 +251,7 @@ The platform is a **three-tier design with an added asynchronous worker tier**, 
 
 ---
 
-## 8. Request / Job Processing Flow
+## 9. Request / Job Processing Flow
 
 ```
 Internet user
@@ -177,46 +274,69 @@ Internet user
 
 ---
 
-## 9. Repository Structure
+## 10. Repository Structure
 
 ```
 KPI-Automation-Tool/
 ├── README.md                         
 ├── Jenkinsfile                       # CI/CD pipeline — staged backend + worker deploys
 │
-├── ci/                               # one shell script per pipeline stage
+├── ci/                               # Shell scripts per pipeline stage
 │   ├── backend/                      # build-image, push-image, update-image-tag, refresh-asg
 │   ├── worker/                       # launch-builder, provision, verify, bake,
 │   │                                 #   update-launch-template, refresh-asg, cleanup
 │   ├── lib/                          # shared config (worker-config.sh)
 │   └── rebake-worker-ami.sh          # standalone end-to-end worker-rebake script
 │
-├── docs/                             # diagrams + deployment evidence
-│   ├── architecture.png              # architecture diagram
-│   ├── Jenkins-pipeline.png          # pipeline diagram
-│   ├── official_jenkins_pipeline.png # real Jenkins run (stage view)
+├── docs/                             # Diagrams + deployment evidence
+│   ├── architecture.png              # Architecture diagram
+│   ├── Jenkins-pipeline.png          # Pipeline diagram
+│   ├── official_jenkins_pipeline.png # Real Jenkins run (stage view)
 │   └── Screenshots/                  # AWS console captures used in §10
 │
 ├── kpi-automation-backend/           # Flask web app + API (the "backend" tier)
-│   ├── IMS_backend.py                # main Flask app: auth, KPI routes, S3/SQS/RDS calls
+│   ├── IMS_backend.py                # Main Flask app: auth, KPI routes, S3/SQS/RDS calls
 │   ├── Dockerfile                    # Nginx → Gunicorn → Flask image (pushed to ECR)
 │   ├── requirements.txt
 │   ├── s3_helpers.py                 # S3 get/put helpers (replaces the old Z:\ drive)
-│   ├── db_connect/                   # MySQL handler (now reads creds from Secrets Manager)
-│   └── templates/  static/           # web UI
+│   ├── db_connect/                   # MySQL handler (reads creds from Secrets Manager)
+│   └── templates/  static/           # Web UI
 │
-└── kpi-automation-worker/            # async job processor (the "worker" tier)
-    └── prepost/
-        ├── prepost_api.py            # SQS long-poll consumer (was a Flask job-runner)
-        ├── prepost_runner.py         # per-job orchestration
-        ├── Final_run.py              # Excel/data processing engine (openpyxl)
-        ├── requirements-automation.txt
-        └── VERSION
+├── kpi-automation-worker/            # Async job processor (the "worker" tier)
+│   └── prepost/
+│       ├── prepost_api.py            # SQS long-poll consumer
+│       ├── prepost_runner.py         # Per-job orchestration
+│       ├── Final_run.py              # Excel/data processing engine (openpyxl)
+│       ├── requirements-automation.txt
+│       └── VERSION
+│
+├── packer/                           # Golden AMI automation (Packer)
+│   ├── backend.pkr.hcl               # Backend Golden AMI builder template
+│   ├── worker.pkr.hcl                # Worker Golden AMI builder template
+│   └── scripts/                      # Provisioning scripts (Docker, Python 3.11, systemd)
+│
+└── terraform/                        # Declarative Infrastructure as Code (Terraform)
+    ├── network.tf                    # VPC, 8 subnets (2 AZs), IGW, 2x NAT GW, S3 Endpoint
+    ├── security_groups.tf            # Tiered Security Group firewalls
+    ├── iam.tf                        # Least-privilege IAM roles & instance profiles
+    ├── s3.tf                         # Report storage bucket
+    ├── secrets.tf                    # AWS Secrets Manager (auto-generated DB & Flask keys)
+    ├── rds.tf                        # Multi-AZ MySQL RDS database
+    ├── sqs.tf                        # SQS job queue + Dead-Letter Queue
+    ├── alb.tf                        # Application Load Balancer & Target Group
+    ├── backend_asg.tf                # Backend Auto Scaling Group & Launch Template
+    ├── worker_asg.tf                 # Worker Auto Scaling Group (SQS target tracking)
+    ├── cloudwatch.tf                 # Centralized logs & 8 CloudWatch alarms + SNS
+    ├── ecr.tf                        # Amazon ECR container registry
+    ├── ssm.tf                        # SSM parameters (/kpi/backend/image-tag, /kpi/automation/ami-id)
+    ├── jenkins.tf                    # Jenkins build server instance
+    ├── outputs.tf                    # Terraform output values (app_url, SQS URLs, etc.)
+    └── user_data/                    # EC2 startup templates (backend.sh.tftpl, worker.sh.tftpl)
 ```
 
 ---
 
-## 10. Deployment Evidence
+## 11. Deployment Evidence
 
 > _Screenshots from the live deployment in my AWS account._
 
@@ -279,7 +399,7 @@ KPI-Automation-Tool/
 
 ---
 
-## 11. Engineering Challenges Solved
+## 12. Engineering Challenges Solved
 
 | Challenge | Solution |
 |---|---|
@@ -290,10 +410,11 @@ KPI-Automation-Tool/
 | **Single automation server** = a bottleneck and a single point of failure | Decoupled via SQS so the worker could become a **multi-AZ Auto Scaling Group** with no double-processing. |
 | **Configuration drift** — patching live instances left the AMI stale, so scale-out booted old code | Moved to **immutable artifacts** (ECR image + baked AMI) tied to the git SHA, rolled out via **Instance Refresh**. |
 | **Worker isn't containerized** but still needs drift-free deploys | Built an automated **AMI rebake pipeline** (launch builder → provision via SSM → verify SHA → bake → relink LT → refresh). |
+| **Manual AWS console provisioning** causing configuration drift & setup errors | Automated 100% of AWS infrastructure using **Terraform & Packer** for reproducible, declarative multi-AZ deployments. |
 
 ---
 
-## 12. Security & Reliability Features
+## 13. Security & Reliability Features
 
 **Security**
 
@@ -312,7 +433,7 @@ KPI-Automation-Tool/
 
 ---
 
-## 13. Architecture Decisions & Trade-offs
+## 14. Architecture Decisions & Trade-offs
 
 Every choice below was deliberate and has a cost. Listing the trade-offs is the point — there is no free lunch, and being explicit about what I gave up is more honest (and more useful in an interview) than claiming each decision was strictly optimal.
 
@@ -322,6 +443,7 @@ Every choice below was deliberate and has a cost. Listing the trade-offs is the 
 | **Multi-AZ + ASG for a ~200-user tool** | Resilience and zero-downtime deploys were the actual requirement; HA was a baseline standard, not a scale need. | **Deliberately over-provisioned for the traffic** — costs more than a single box would. | Single EC2 + manual restart (cheaper, but a SPOF with downtime on every deploy). |
 | **S3 Gateway Endpoint** | S3 traffic stays on the AWS backbone — no NAT data-processing charges, lower latency, tighter security. | One more VPC construct to manage and attach to route tables. | Route S3 through the NAT (simpler, but pays per-GB and widens the egress path). |
 | **Secrets Manager for DB/app secrets** | Native rotation support and clean IAM-scoped access for credentials. | Costs per secret/month vs. free SecureString params. | SSM Parameter Store SecureString (free, used here for non-secret config like image tags). |
+| **Terraform + Packer for Infrastructure** | Declarative IaC and pre-baked Golden AMIs eliminate configuration drift and manual provisioning errors. | Requires maintaining HCL code and learning Packer/Terraform syntax. | AWS CloudFormation / CDK (Terraform offers broader multi-cloud flexibility and cleaner HCL state management). |
 
 ---
 
