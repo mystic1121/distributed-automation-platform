@@ -62,16 +62,16 @@ The entire AWS infrastructure and compute image baking are fully automated using
 |                                                                                   |
 |  [ Local Machine ]                                                                |
 |        |                                                                          |
-|        +---> packer build backend.pkr.hcl  --> [ Backend Golden AMI  ]             |
+|        +---> packer build backend.pkr.hcl  --> [ Backend Golden AMI  ]            |
 |        |                                       (Docker + Nginx + App Image)       |
 |        |                                                                          |
-|        +---> packer build worker.pkr.hcl   --> [ Worker Golden AMI   ]             |
+|        +---> packer build worker.pkr.hcl   --> [ Worker Golden AMI   ]            |
 |                                                (Python 3.11 + systemd + deps)     |
 +-------------------------------------------+---------------------------------------+
                                             |
                                             v (Pass AMI IDs to terraform.tfvars)
 +-------------------------------------------+---------------------------------------+
-| PHASE 2: Declarative Infrastructure Provisioning (Terraform)                       |
+| PHASE 2: Declarative Infrastructure Provisioning (Terraform)                      |
 |                                                                                   |
 |  [ terraform apply ]                                                              |
 |        |                                                                          |
@@ -81,15 +81,15 @@ The entire AWS infrastructure and compute image baking are fully automated using
 |   |                                                                           |   |
 |   |   +--------------------+     +----------------------------------------+   |   |
 |   |   | Public Subnets     |     | Private Subnets                        |   |   |
-|   |   |  - Public ALB      |     |  - Backend ASG (Backend Golden AMI)   |   |   |
-|   |   |  - NAT Gateways    | ==> |  - Worker ASG  (Worker Golden AMI)    |   |   |
+|   |   |  - Public ALB      |     |  - Backend ASG (Backend Golden AMI)    |   |   |
+|   |   |  - NAT Gateways    | ==> |  - Worker ASG  (Worker Golden AMI)     |   |   |
 |   |   |  - Jenkins EC2     |     |  - Multi-AZ RDS MySQL                  |   |   |
 |   |   +--------------------+     +----------------------------------------+   |   |
 |   |                                                                           |   |
 |   |   +-------------------------------------------------------------------+   |   |
 |   |   | Supporting AWS Services & Security                                |   |   |
-|   |   |  - SQS Job Queue & DLQ     - AWS Secrets Manager (Auto Creds)      |   |   |
-|   |   |  - S3 Storage & VPC Endpt  - CloudWatch Alarms & SNS Email Alerts   |   |   |
+|   |   |  - SQS Job Queue & DLQ     - AWS Secrets Manager (Auto Creds)     |   |   |
+|   |   |  - S3 Storage & VPC Endpt  - CloudWatch Alarms & SNS Email Alerts |   |   |
 |   |   |  - Amazon ECR Registry   - SSM Parameter Store                    |   |   |
 |   |   +-------------------------------------------------------------------+   |   |
 |   +---------------------------------------------------------------------------+   |
@@ -105,7 +105,7 @@ The entire AWS infrastructure and compute image baking are fully automated using
 |    | (Backend Push)                                              | (Worker Push)  |
 |    v                                                             v                |
 |  Docker Push -> ECR                       SSM RunCommand -> Bake Worker AMI       |
-|  Update /kpi/backend/image-tag (SSM)      Update Launch Template version           |
+|  Update /kpi/backend/image-tag (SSM)      Update Launch Template version          |
 |  Backend ASG Instance Refresh             Worker ASG Instance Refresh             |
 +-----------------------------------------------------------------------------------+
 ```
